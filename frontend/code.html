@@ -1,0 +1,815 @@
+<!DOCTYPE html>
+<html class="scroll-smooth" lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>AgriVision - Crop Yield Prediction</title>
+<link href="data:image/x-icon;base64," rel="icon" type="image/x-icon"/>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800;900&amp;display=swap" rel="stylesheet"/>
+<link rel="shortcut icon" href="icon.jpeg" type="image/x-icon">
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<style type="text/tailwindcss">
+        :root {
+            --primary-color: #38e07b;
+            --secondary-color: #2a9d5a;
+            --background-color: #1a1a1a;
+            --text-primary: #e0e0e0;
+            --text-secondary: #a0a0a0;
+            --accent-color: #4ade80;
+            --card-bg-color: #242424;
+            --border-color: #333333;
+            --saffron: #FF9933;
+            --white: #FFFFFF;
+            --green: #138808;
+        }
+        body {
+            font-family: 'Poppins', sans-serif;
+            background-color: var(--background-color);
+            color: var(--text-primary);
+        }
+    </style>
+</head>
+<body class="bg-[var(--background-color)] text-[var(--text-primary)]">
+<div class="relative flex size-full min-h-screen flex-col overflow-x-hidden">
+<div class="layout-container flex h-full grow flex-col">
+<header class="sticky top-0 z-50 bg-[var(--background-color)]/80 backdrop-blur-sm">
+  <div class="mx-auto max-w-8xl px-4 sm:px-6 lg:px-6">
+    <div class="flex h-20 items-center justify-between">
+      <div class="flex items-center gap-4">
+        <img src="icon.jpeg" alt="Company Logo" class="h-10 w-auto object-contain" />
+        <h2 class="text-2xl font-bold leading-tight tracking-[-0.015em] text-[var(--text-primary)]">AgriVision</h2>
+      </div>
+      <nav class="hidden md:flex items-center gap-8">
+        <a class="text-sm font-medium leading-normal text-[var(--text-secondary)] transition-colors hover:text-[var(--text-primary)]" href="#" data-i18n="nav-home">Home</a>
+        <a class="text-sm font-medium leading-normal text-[var(--text-secondary)] transition-colors hover:text-[var(--text-primary)]" href="#about" data-i18n="nav-about">About</a>
+        <a class="text-sm font-medium leading-normal text-[var(--text-secondary)] transition-colors hover:text-[var(--text-primary)]" href="#features" data-i18n="nav-features">Features</a>
+        <a class="text-sm font-medium leading-normal text-[var(--text-secondary)] transition-colors hover:text-[var(--text-primary)]" href="#benefits" data-i18n="nav-benefits">Benefits</a>
+        <a class="text-sm font-medium leading-normal text-[var(--text-secondary)] transition-colors hover:text-[var(--text-primary)]" href="#contact" data-i18n="nav-contact">Contact Us</a>
+      </nav>
+      <div class="relative ml-1 md:ml-2 lg:ml-6">
+        <select class="bg-black/30 text-white border border-white/20 rounded-[var(--border-radius-full)] px-4 py-2 focus:outline-none focus:ring-2 focus:ring-[var(--primary-color)] transition-all duration-300 appearance-none bg-no-repeat bg-right pr-8" id="language-switcher" style="background-image: url('data:image/svg+xml,%3csvg xmlns=%27http://www.w3.org/2000/svg%27 fill=%27none%27 viewBox=%270 0 20 20%27%3e%3cpath stroke=%27%23e0e0e0%27 stroke-linecap=%27round%27 stroke-linejoin=%27round%27 stroke-width=%271.5%27 d=%27M6 8l4 4 4-4%27/%3e%3c/svg%3e'); background-position: right 0.5rem center; background-size: 1.5em 1.5em;" data-i18n="language-select">
+           <option value="en">English</option>
+           <option value="hi">हिन्दी</option>
+           <option value="bn">বাংলা</option>
+           <option value="pa">ਪੰਜਾਬੀ</option>
+           <option value="or">ଓଡ଼ିଆ</option>
+           <option value="ta">தமிழ்</option>
+           <option value="mr">मराठी</option>
+           <option value="gu">ગુજરાતી</option>
+           <option value="ml">മലയാളം</option>
+        </select>
+      </div>
+      <a class="hidden md:inline-flex min-w-[120px] cursor-pointer items-center justify-center overflow-hidden rounded-full h-11 px-6 bg-[var(--primary-color)] text-gray-900 text-sm font-bold leading-normal tracking-wide shadow-lg transition-all hover:bg-[var(--accent-color)] hover:shadow-xl" href="PREDICT.html" data-i18n="nav-get-started">
+        Get Started
+      </a>
+      <button id="mobile-menu-button" class="md:hidden rounded-md p-2 text-[var(--text-secondary)] hover:bg-gray-800 hover:text-[var(--text-primary)]">
+        <svg class="h-6 w-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <path d="M4 6h16M4 12h16M4 18h16" stroke-linecap="round" stroke-linejoin="round"></path>
+        </svg>
+      </button>
+    </div>
+  </div>
+  <div id="mobile-menu" class="hidden absolute top-20 left-0 w-full bg-[var(--card-bg-color)] shadow-lg md:hidden">
+    <div class="px-2 pt-2 pb-3 space-y-1 sm:px-3">
+      <a href="#" class="block px-3 py-2 rounded-md text-base font-medium text-white hover:bg-[var(--primary-color)] hover:text-gray-900" data-i18n="nav-home">Home</a>
+      <a href="#about" class="block px-3 py-2 rounded-md text-base font-medium text-white hover:bg-[var(--primary-color)] hover:text-gray-900" data-i18n="nav-about">About</a>
+      <a href="#features" class="block px-3 py-2 rounded-md text-base font-medium text-white hover:bg-[var(--primary-color)] hover:text-gray-900" data-i18n="nav-features">Features</a>
+      <a href="#benefits" class="block px-3 py-2 rounded-md text-base font-medium text-white hover:bg-[var(--primary-color)] hover:text-gray-900" data-i18n="nav-benefits">Benefits</a>
+      <a href="#contact" class="block px-3 py-2 rounded-md text-base font-medium text-white hover:bg-[var(--primary-color)] hover:text-gray-900" data-i18n="nav-contact">Contact Us</a>
+      <a href="PREDICT.html" class="block w-full text-center mt-4 px-4 py-2 rounded-full bg-[var(--primary-color)] text-gray-900 font-bold hover:bg-[var(--accent-color)]" data-i18n="nav-get-started">Get Started</a>
+    </div>
+  </div>
+</header><main class="flex-1">
+<section class="relative py-20 md:py-32">
+<div class="absolute inset-0 bg-cover bg-center" style='background-image: linear-gradient(rgba(26, 26, 26, 0.5) 0%, rgba(26, 26, 26, 1) 100%), url("https://lh3.googleusercontent.com/aida-public/AB6AXuAYLBm8uZPVssl_YDpf1aywZEZELF55YNIUrZIkGbqfcKy0VT16SJPcLn8Cch72wcHK-EommU4iQyKyqCFCG2udLggqsnhSKoiUDh_Juw0CKUarwQ7_Z3TENC0d1bmKR5q53WVrNmqbUlk3wB0EkjT7mx1GjfE_kKfmzOa6JsK2NZF5R-kRx7P5tsuLETadexyicY_QFMlUnflpMX2LURLi5juuZ2VvbvGEITxsYJpR4t73PWJrjuUYNATWyLLmyn0ab8mZpQJx7-bY");'></div>
+<div class="relative mx-auto max-w-4xl px-4 text-center sm:px-6 lg:px-8">
+<h1 class="text-4xl font-extrabold tracking-tight text-white sm:text-5xl md:text-6xl" data-i18n="main-heading">Predict Your Crop Yield with Precision</h1>
+<p class="mt-6 max-w-2xl mx-auto text-lg text-[var(--text-secondary)]" data-i18n="main-subtitle">Leverage advanced machine learning models to forecast crop yields accurately, optimizing your agricultural planning and resource management.</p>
+<div class="mt-8 mb-6">
+<h2 class="text-3xl font-bold tracking-tight">
+<span class="text-[var(--saffron)]" data-i18n="smarter">Smarter</span>
+<span class="text-[var(--white)]" data-i18n="insights">Insights.</span>
+<span class="text-[var(--green)]" data-i18n="higher">Higher</span>
+<span class="text-[var(--saffron)]" data-i18n="yields">Yields.</span>
+<span class="text-[var(--white)]" data-i18n="better">Better</span>
+<span class="text-[var(--green)]" data-i18n="lives">Lives.</span>
+</h2>
+</div>
+<div class="mt-10">
+<a class="inline-flex min-w-[150px] cursor-pointer items-center justify-center overflow-hidden rounded-full h-14 px-8 bg-[var(--primary-color)] text-gray-900 text-base font-bold leading-normal tracking-wide shadow-lg transition-all hover:bg-[var(--accent-color)] hover:shadow-xl" href="PREDICT.html" data-i18n="start-predicting">
+                                Start Predicting Now
+                            </a>
+</div>
+</div>
+</section>
+<section class="py-20 md:py-28 bg-[var(--card-bg-color)]" id="about">
+<div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+<div class="lg:grid lg:grid-cols-2 lg:gap-16 lg:items-center">
+<div>
+<h2 class="text-3xl font-extrabold tracking-tight text-[var(--text-primary)] sm:text-4xl" data-i18n="about-title">🌱 About Us</h2>
+<p class="mt-4 text-xl text-[var(--text-secondary)]" data-i18n="about-text-1">AgriVision harnesses the power of cutting-edge machine learning to provide farmers with accurate and reliable crop yield predictions. Our sophisticated model analyzes a wide array of data points to deliver actionable insights, helping you make smarter decisions for a more profitable and sustainable farm.</p>
+<p class="mt-4 text-xl text-[var(--text-secondary)]" data-i18n="about-text-2">In this project, we have developed an AI-Powered Crop Yield Prediction & Optimization platform that leverages weather data, soil metrics, and historical crop yields to forecast productivity. Along with predictions, our system provides actionable recommendations for irrigation, fertilization, and pest management—helping farmers increase yields and reduce risks.
+</p>
+
+</div>
+<div class="mt-10 lg:mt-0">
+<div class="space-y-8">
+<div>
+<h3 class="text-xl font-bold text-[var(--primary-color)]" data-i18n="how-it-works">How It Works</h3>
+<p class="mt-2 text-[var(--text-secondary)]" data-i18n="how-it-works-text">Our model integrates historical weather patterns, soil health data, satellite imagery, and your specific crop information. Advanced algorithms then process this data to generate highly accurate yield forecasts for your fields.</p>
+</div>
+<div>
+<h3 class="text-xl font-bold text-[var(--primary-color)]" data-i18n="key-features">Key Features</h3>
+<ul class="mt-2 list-disc list-inside text-[var(--text-secondary)] space-y-1">
+<li data-i18n="feature-1">Accurate, field-level yield predictions.</li>
+<li data-i18n="feature-2">Integration of diverse data sources.</li>
+<li data-i18n="feature-3">User-friendly dashboard for easy analysis.</li>
+<li data-i18n="feature-4">Actionable insights to optimize practices.</li>
+</ul>
+</div>
+<div>
+<h3 class="text-xl font-bold text-[var(--primary-color)]" data-i18n="benefits-title">Benefits</h3>
+<ul class="mt-2 list-disc list-inside text-[var(--text-secondary)] space-y-1">
+<li data-i18n="benefit-1">Maximize profitability with data-driven decisions.</li>
+<li data-i18n="benefit-2">Optimize resource allocation for efficiency.</li>
+<li data-i18n="benefit-3">Mitigate risks by anticipating yield outcomes.</li>
+<li data-i18n="benefit-4">Enhance overall farm management and sustainability.</li>
+</ul>
+</div>
+</div>
+</div>
+</div>
+</div>
+</section>
+<section class="py-20 md:py-28" id="features">
+<div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+<div class="text-center">
+<h2 class="text-base font-semibold uppercase tracking-wider text-[var(--primary-color)]" data-i18n="features-subtitle">Key Features</h2>
+<p class="mt-2 text-3xl font-extrabold tracking-tight text-[var(--text-primary)] sm:text-4xl" data-i18n="features-title">Powerful Tools for Modern Agriculture</p>
+</div>
+<div class="mt-16 grid gap-10 md:grid-cols-2 lg:grid-cols-3">
+<div class="flex flex-col items-center text-center p-8 rounded-2xl bg-[var(--card-bg-color)] border border-[var(--border-color)] shadow-lg transition-all duration-300 hover:shadow-2xl hover:-translate-y-2">
+<div class="flex h-16 w-16 items-center justify-center rounded-full bg-[var(--primary-color)]/10 text-[var(--primary-color)]">
+<svg class="h-8 w-8" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+<path d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" stroke-linecap="round" stroke-linejoin="round"></path>
+</svg>
+</div>
+<h3 class="mt-6 text-xl font-bold text-[var(--text-primary)]" data-i18n="analytics-title">Advanced Analytics</h3>
+<p class="mt-2 text-base text-[var(--text-secondary)]" data-i18n="analytics-text">Utilizes cutting-edge machine learning techniques for accurate yield predictions.</p>
+</div>
+<div class="flex flex-col items-center text-center p-8 rounded-2xl bg-[var(--card-bg-color)] border border-[var(--border-color)] shadow-lg transition-all duration-300 hover:shadow-2xl hover:-translate-y-2">
+<div class="flex h-16 w-16 items-center justify-center rounded-full bg-[var(--primary-color)]/10 text-[var(--primary-color)]">
+<svg class="h-8 w-8" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+<path d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4m0 5c0 2.21-3.582 4-8 4s-8-1.79-8-4" stroke-linecap="round" stroke-linejoin="round"></path>
+</svg>
+</div>
+<h3 class="mt-6 text-xl font-bold text-[var(--text-primary)]" data-i18n="data-title">Comprehensive Data Integration</h3>
+<p class="mt-2 text-base text-[var(--text-secondary)]" data-i18n="data-text">Combines diverse data sources for a holistic view of crop yield factors.</p>
+</div>
+<div class="flex flex-col items-center text-center p-8 rounded-2xl bg-[var(--card-bg-color)] border border-[var(--border-color)] shadow-lg transition-all duration-300 hover:shadow-2xl hover:-translate-y-2">
+<div class="flex h-16 w-16 items-center justify-center rounded-full bg-[var(--primary-color)]/10 text-[var(--primary-color)]">
+<svg class="h-8 w-8" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+<path d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" stroke-linecap="round" stroke-linejoin="round"></path>
+</svg>
+</div>
+<h3 class="mt-6 text-xl font-bold text-[var(--text-primary)]" data-i18n="interface-title">User-Friendly Interface</h3>
+<p class="mt-2 text-base text-[var(--text-secondary)]" data-i18n="interface-text">Intuitive design for easy navigation and efficient data interpretation.</p>
+</div>
+</div>
+</div>
+</section>
+<section class="py-20 md:py-28 bg-[var(--card-bg-color)]" id="benefits">
+<div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+<div class="text-center">
+<h2 class="text-base font-semibold uppercase tracking-wider text-[var(--primary-color)]" data-i18n="benefits-subtitle">Benefits</h2>
+<p class="mt-2 text-3xl font-extrabold tracking-tight text-[var(--text-primary)] sm:text-4xl" data-i18n="benefits-title-main">Unlock Your Farm's Full Potential</p>
+</div>
+<div class="mt-16 grid gap-10 md:grid-cols-2 lg:grid-cols-3">
+<div class="flex flex-col items-center text-center p-8 rounded-2xl bg-[var(--background-color)] border border-[var(--border-color)] shadow-lg transition-all duration-300 hover:shadow-2xl hover:-translate-y-2">
+<div class="flex h-16 w-16 items-center justify-center rounded-full bg-[var(--primary-color)]/10 text-[var(--primary-color)]">
+<svg class="h-8 w-8" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+<path d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v.01" stroke-linecap="round" stroke-linejoin="round"></path>
+</svg>
+</div>
+<h3 class="mt-6 text-xl font-bold text-[var(--text-primary)]" data-i18n="profitability-title">Maximize Profitability</h3>
+<p class="mt-2 text-base text-[var(--text-secondary)]" data-i18n="profitability-text">Make data-driven decisions to improve yield and increase revenue.</p>
+</div>
+<div class="flex flex-col items-center text-center p-8 rounded-2xl bg-[var(--background-color)] border border-[var(--border-color)] shadow-lg transition-all duration-300 hover:shadow-2xl hover:-translate-y-2">
+<div class="flex h-16 w-16 items-center justify-center rounded-full bg-[var(--primary-color)]/10 text-[var(--primary-color)]">
+<svg class="h-8 w-8" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+<path d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" stroke-linecap="round" stroke-linejoin="round"></path>
+</svg>
+</div>
+<h3 class="mt-6 text-xl font-bold text-[var(--text-primary)]" data-i18n="resource-title">Optimize Resource Allocation</h3>
+<p class="mt-2 text-base text-[var(--text-secondary)]" data-i18n="resource-text">Efficiently manage resources like water, fertilizers, and labor based on yield forecasts.</p>
+</div>
+<div class="flex flex-col items-center text-center p-8 rounded-2xl bg-[var(--background-color)] border border-[var(--border-color)] shadow-lg transition-all duration-300 hover:shadow-2xl hover:-translate-y-2">
+<div class="flex h-16 w-16 items-center justify-center rounded-full bg-[var(--primary-color)]/10 text-[var(--primary-color)]">
+<svg class="h-8 w-8" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+<path d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2h8a2 2 0 002-2v-1a2 2 0 012-2h1.945M7.778 16.5l-2.89-2.89a.5.5 0 00-.707.707l3.244 3.243a.5.5 0 00.707 0l3.243-3.243a.5.5 0 00-.707-.707L9 16.5V3a1 1 0 00-1-1H4a1 1 0 00-1 1v13.5h.778zM16.222 16.5l2.89-2.89a.5.5 0 01.707.707l-3.244 3.243a.5.5 0 01-.707 0l-3.243-3.243a.5.5 0 01.707-.707L15 16.5V3a1 1 0 011-1h4a1 1 0 011 1v13.5h-.778z" stroke-linecap="round" stroke-linejoin="round"></path>
+</svg>
+</div>
+<h3 class="mt-6 text-xl font-bold text-[var(--text-primary)]" data-i18n="management-title">Enhance Crop Management</h3>
+<p class="mt-2 text-base text-[var(--text-secondary)]" data-i18n="management-text">Gain insights into crop performance and adapt farming practices for better outcomes.</p>
+</div>
+</div>
+</div>
+</section>
+<section class="py-20 md:py-28" id="contact">
+<div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+<div class="text-center">
+<h2 class="text-base font-semibold uppercase tracking-wider text-[var(--primary-color)]" data-i18n="contact-subtitle">Contact Us</h2>
+<p class="mt-2 text-3xl font-extrabold tracking-tight text-[var(--text-primary)] sm:text-4xl" data-i18n="contact-title">Get in Touch</p>
+<p class="mt-4 max-w-3xl mx-auto text-lg text-[var(--text-secondary)]" data-i18n="contact-text">This project has been designed and developed by students of Netaji Subhash Engineering College as part of our hackathon journey: Akash Raaj, Vasudha Biswas, Ankit Khanna, Shivam Tiwari, Harsh Anand, Satyam Shubham.</p>
+</div>
+<div class="mt-16 text-center">
+<a class="inline-flex min-w-[150px] cursor-pointer items-center justify-center overflow-hidden rounded-full h-14 px-8 bg-[var(--primary-color)] text-gray-900 text-base font-bold leading-normal tracking-wide shadow-lg transition-all hover:bg-[var(--accent-color)] hover:shadow-xl" href="mailto:akashshukla6996@gmail.com" data-i18n="contact-button">
+                                Contact Us
+                            </a>
+</div>
+</div>
+</section>
+</main>
+<footer class="bg-[var(--card-bg-color)]">
+<div class="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
+<div class="flex flex-col items-center justify-between gap-6 md:flex-row">
+<div class="flex flex-col items-center gap-2 md:items-start">
+<div class="flex items-center gap-3">
+ <img src="icon.jpeg" alt="Company Logo" class="h-10 w-auto object-contain"/>
+<path clip-rule="evenodd" d="M24 4H6V17.3333V30.6667H24V44H42V30.6667V17.3333H24V4Z" fill="currentColor" fill-rule="evenodd"></path>
+</svg>
+<p class="text-xl font-bold text-[var(--text-primary)]">AgriVision</p>
+</div>
+<p class="text-sm text-[var(--text-secondary)]" data-i18n="copyright">© 2025 AgriVision. All rights reserved.</p>
+</div>
+<div class="flex items-center gap-6">
+<p data-i18n="footer-text">MADE FOR FARMERS WITH GRATITUDE ❤</p>
+</div>
+<div class="flex justify-center space-x-6">
+<a class="text-[var(--text-secondary)] hover:text-[var(--text-primary)]" href="#"><span class="sr-only">Twitter</span>
+<svg aria-hidden="true" class="h-6 w-6" fill="currentColor" viewBox="0 0 24 24">
+<path d="M8.29 20.251c7.547 0 11.675-6.253 11.675-11.675 0-.178 0-.355-.012-.53A8.348 8.348 0 0022 5.92a8.19 8.19 0 01-2.357.646 4.118 4.118 0 001.804-2.27 8.224 8.224 0 01-2.605.996 4.107 4.107 0 00-6.993 3.743 11.65 11.65 0 01-8.457-4.287 4.106 4.106 0 001.27 5.477A4.072 4.072 0 012.8 9.71v.052a4.105 4.105 0 003.292 4.022 4.095 4.095 0 01-1.853.07 4.108 4.108 0 003.834 2.85A8.233 8.233 0 012 18.407a11.616 11.616 0 006.29 1.84"></path>
+</svg>
+</a>
+<a class="text-[var(--text-secondary)] hover:text-[var(--text-primary)]" href="#"><span class="sr-only">Facebook</span>
+<svg aria-hidden="true" class="h-6 w-6" fill="currentColor" viewBox="0 0 24 24">
+<path clip-rule="evenodd" d="M22 12c0-5.523-4.477-10-10-10S2 6.477 2 12c0 4.991 3.657 9.128 8.438 9.878v-6.987h-2.54V12h2.54V9.797c0-2.506 1.492-3.89 3.777-3.89 1.094 0 2.238.195 2.238.195v2.46h-1.26c-1.243 0-1.63.771-1.63 1.562V12h2.773l-.443 2.89h-2.33v6.988C18.343 21.128 22 16.991 22 12z" fill-rule="evenodd"></path>
+</svg>
+</a>
+<a class="text-[var(--text-secondary)] hover:text-[var(--text-primary)]" href="#"><span class="sr-only">Instagram</span>
+<svg aria-hidden="true" class="h-6 w-6" fill="currentColor" viewBox="0 0 24 24">
+<path clip-rule="evenodd" d="M12.315 2c2.43 0 2.784.013 3.808.06 1.064.049 1.791.218 2.427.465a4.902 4.902 0 011.772 1.153 4.902 4.902 0 011.153 1.772c.247.636.416 1.363.465 2.427.048 1.024.06 1.378.06 3.808s-.012 2.784-.06 3.808c-.049 1.064-.218 1.791-.465 2.427a4.902 4.902 0 01-1.153 1.772 4.902 4.902 0 01-1.772 1.153c-.636.247-1.363.416-2.427.465-1.024.048-1.378.06-3.808.06s-2.784-.013-3.808-.06c-1.064-.049-1.791-.218-2.427-.465a4.902 4.902 0 01-1.772-1.153 4.902 4.902 0 01-1.153-1.772c-.247-.636-.416-1.363-.465-2.427-.048-1.024-.06-1.378-.06-3.808s.012-2.784.06-3.808c.049-1.064.218-1.791.465-2.427a4.902 4.902 0 011.153-1.772A4.902 4.902 0 016.345 2.525c.636-.247 1.363-.416 2.427-.465C9.793 2.013 10.147 2 12.315 2zM12 0C9.58 0 9.22.01 8.05.058c-1.17.053-1.995.226-2.695.483a6.878 6.878 0 00-2.43 1.622A6.878 6.878 0 001.28 6.36C1.022 7.06.85 7.884.8 9.053.75 10.222.74 10.58.74 13s.01 2.778.06 3.948c.052 1.17.225 1.995.483 2.695a6.878 6.878 0 001.622 2.43 6.878 6.878 0 002.43 1.622c.7.258 1.523.43 2.695.483 1.17.049 1.53.058 3.948.058s2.778-.01 3.948-.058c1.17-.053 1.995-.226 2.695-.483a6.878 6.878 0 002.43-1.622 6.878 6.878 0 001.622-2.43c.258-.7.43-1.523.483-2.695.049-1.17.058-1.53.058-3.948s-.01-2.778-.058-3.948c-.053-1.17-.226-1.995-.483-2.695A6.878 6.878 0 0019.64 3.64a6.878 6.878 0 00-2.43-1.622c-.7-.258-1.523-.43-2.695-.483C14.778.01 14.42 0 12 0zm0 5.838a6.162 6.162 0 100 12.324 6.162 6.162 0 000-12.324zM12 16a4 4 0 110-8 4 4 0 010 8zm6.406-11.845a1.44 1.44 0 100 2.88 1.44 1.44 0 000-2.88z" fill-rule="evenodd"></path>
+</svg>
+</a>
+</div>
+</div>
+</div>
+</footer>
+</div>
+</div>
+<script>
+  // Mobile menu functionality
+  const mobileMenuButton = document.getElementById('mobile-menu-button');
+  const mobileMenu = document.getElementById('mobile-menu');
+
+  mobileMenuButton.addEventListener('click', () => {
+    mobileMenu.classList.toggle('hidden');
+  });
+
+  // Language translation functionality
+  const languageSwitcher = document.getElementById('language-switcher');
+  
+  // Language translations
+  const translations = {
+    en: {
+  "nav-home": "Home",
+    "nav-about": "About",
+    "nav-features": "Features",
+    "nav-benefits": "Benefits",
+    "nav-contact": "Contact Us",
+    "nav-get-started": "Get Started",
+      "main-heading": "Predict Your Crop Yield with Precision",
+      "main-subtitle": "Leverage advanced machine learning models to forecast crop yields accurately, optimizing your agricultural planning and resource management.",
+      "smarter": "Smarter",
+      "insights": "Insights.",
+      "higher": "Higher",
+      "yields": "Yields.",
+      "better": "Better",
+      "lives": "Lives.",
+      "start-predicting": "Start Predicting Now",
+      "about-title": "🌱 About Us",
+      "about-text-1": "AgriVision harnesses the power of cutting-edge machine learning to provide farmers with accurate and reliable crop yield predictions. Our sophisticated model analyzes a wide array of data points to deliver actionable insights, helping you make smarter decisions for a more profitable and sustainable farm.",
+      "about-text-2": "In this project, we have developed an AI-Powered Crop Yield Prediction & Optimization platform that leverages weather data, soil metrics, and historical crop yields to forecast productivity. Along with predictions, our system provides actionable recommendations for irrigation, fertilization, and pest management—helping farmers increase yields and reduce risks.",
+      "how-it-works": "How It Works",
+      "how-it-works-text": "Our model integrates historical weather patterns, soil health data, satellite imagery, and your specific crop information. Advanced algorithms then process this data to generate highly accurate yield forecasts for your fields.",
+      "key-features": "Key Features",
+      "feature-1": "Accurate, field-level yield predictions.",
+      "feature-2": "Integration of diverse data sources.",
+      "feature-3": "User-friendly dashboard for easy analysis.",
+      "feature-4": "Actionable insights to optimize practices.",
+      "benefits-title": "Benefits",
+      "benefit-1": "Maximize profitability with data-driven decisions.",
+      "benefit-2": "Optimize resource allocation for efficiency.",
+      "benefit-3": "Mitigate risks by anticipating yield outcomes.",
+      "benefit-4": "Enhance overall farm management and sustainability.",
+      "features-subtitle": "Key Features",
+      "features-title": "Powerful Tools for Modern Agriculture",
+      "analytics-title": "Advanced Analytics",
+      "analytics-text": "Utilizes cutting-edge machine learning techniques for accurate yield predictions.",
+      "data-title": "Comprehensive Data Integration",
+      "data-text": "Combines diverse data sources for a holistic view of crop yield factors.",
+      "interface-title": "User-Friendly Interface",
+      "interface-text": "Intuitive design for easy navigation and efficient data interpretation.",
+      "benefits-subtitle": "Benefits",
+      "benefits-title-main": "Unlock Your Farm's Full Potential",
+      "profitability-title": "Maximize Profitability",
+      "profitability-text": "Make data-driven decisions to improve yield and increase revenue.",
+      "resource-title": "Optimize Resource Allocation",
+      "resource-text": "Efficiently manage resources like water, fertilizers, and labor based on yield forecasts.",
+      "management-title": "Enhance Crop Management",
+      "management-text": "Gain insights into crop performance and adapt farming practices for better outcomes.",
+      "contact-subtitle": "Contact Us",
+      "contact-title": "Get in Touch",
+      "contact-text": "This project has been designed and developed by students of Netaji Subhash Engineering College as part of our hackathon journey: Akash Raaj, Vasudha Biswas, Ankit Khanna, Shivam Tiwari, Harsh Anand, Satyam Shubham.",
+      "contact-button": "Contact Us",
+      "copyright": "© 2025 AgriVision. All rights reserved.",
+      "footer-text": "MADE FOR FARMERS WITH GRATITUDE ❤"
+    },
+    hi: {
+      "nav-home": "होम",
+    "nav-about": "के बारे में",
+    "nav-features": "विशेषताएं",
+    "nav-benefits": "लाभ",
+    "nav-contact": "संपर्क करें",
+    "nav-get-started": "शुरू करें",
+      "main-heading": "सटीकता के साथ अपनी फसल उपज की भविष्यवाणी करें",
+      "main-subtitle": "उन्नत मशीन लर्निंग मॉडल का लाभ उठाकर फसल उपज का सटीक पूर्वानुमान लगाएं, अपनी कृषि योजना और संसाधन प्रबंधन को अनुकूलित करें।",
+      "smarter": "चतुर",
+      "insights": "अंतर्दृष्टि।",
+      "higher": "उच्च",
+      "yields": "उपज।",
+      "better": "बेहतर",
+      "lives": "जीवन।",
+      "start-predicting": "अब भविष्यवाणी शुरू करें",
+      "about-title": "🌱 हमारे बारे में",
+      "about-text-1": "एग्रीविजन किसानों को सटीक और विश्वसनीय फसल उपज पूर्वानुमान प्रदान करने के लिए अत्याधुनिक मशीन लर्निंग की शक्ति का उपयोग करता है। हमारा परिष्कृत मॉडल कार्रवाई योग्य अंतर्दृष्टि प्रदान करने के लिए डेटा बिंदुओं की एक विस्तृत श्रृंखला का विश्लेषण करता है, जो आपको अधिक लाभदायक और टिकाऊ खेत के लिए चतुर निर्णय लेने में मदद करता है।",
+      "about-text-2": "इस परियोजना में, हमने एक एआई-संचालित फसल उपज पूर्वानुमान और अनुकूलन प्लेटफॉर्म विकसित किया है जो उत्पादकता का पूर्वानुमान लगाने के लिए मौसम डेटा, मिट्टी मेट्रिक्स और ऐतिहासिक फसल उपज का लाभ उठाता है। भविष्यवाणियों के साथ, हमारी प्रणाली सिंचाई, निषेचन और कीट प्रबंधन के लिए कार्रवाई योग्य सिफारिशें प्रदान करती है - जिससे किसानों को उपज बढ़ाने और जोखिम कम करने में मदद मिलती है।",
+      "how-it-works": "यह कैसे काम करता है",
+      "how-it-works-text": "हमारा मॉडल ऐतिहासिक मौसम पैटर्न, मिट्टी स्वास्थ्य डेटा, उपग्रह इमेजरी और आपकी विशिष्ट फसल जानकारी को एकीकृत करता है। उन्नत एल्गोरिदम तब आपके खेतों के लिए अत्यधिक सटीक उपज पूर्वानुमान उत्पन्न करने के लिए इस डेटा को संसाधित करते हैं।",
+      "key-features": "मुख्य विशेषताएं",
+      "feature-1": "सटीक, फील्ड-स्तरीय उपज पूर्वानुमान।",
+      "feature-2": "विविध डेटा स्रोतों का एकीकरण।",
+      "feature-3": "आसान विश्लेषण के लिए उपयोगकर्ता-अनुकूल डैशबोर्ड।",
+      "feature-4": "अभ्यासों को अनुकूलित करने के लिए कार्रवाई योग्य अंतर्दृष्टि।",
+      "benefits-title": "लाभ",
+      "benefit-1": "डेटा-संचालित निर्णयों के साथ लाभप्रदता को अधिकतम करें।",
+      "benefit-2": "दक्षता के लिए संसाधन आवंटन को अनुकूलित करें।",
+      "benefit-3": "उपज परिणामों की आशंका से जोखिमों को कम करें।",
+      "benefit-4": "समग्र खेत प्रबंधन और स्थिरता में सुधार करें।",
+      "features-subtitle": "मुख्य विशेषताएं",
+      "features-title": "आधुनिक कृषि के लिए शक्तिशाली उपकरण",
+      "analytics-title": "उन्नत विश्लेषिकी",
+      "analytics-text": "सटीक उपज पूर्वानुमान के लिए अत्याधुनिक मशीन लर्निंग तकनीकों का उपयोग करता है।",
+      "data-title": "व्यापक डेटा एकीकरण",
+      "data-text": "फसल उपज कारकों के समग्र दृष्टिकोण के लिए विविध डेटा स्रोतों को जोड़ता है।",
+      "interface-title": "उपयोगकर्ता-अनुकूल इंटरफेस",
+      "interface-text": "आसान नेविगेशन और कुशल डेटा व्याख्या के लिए सहज डिजाइन।",
+      "benefits-subtitle": "लाभ",
+      "benefits-title-main": "अपने खेत की पूरी क्षमता को अनलॉक करें",
+      "profitability-title": "लाभप्रदता को अधिकतम करें",
+      "profitability-text": "उपज में सुधार और राजस्व बढ़ाने के लिए डेटा-संचालित निर्णय लें।",
+      "resource-title": "संसाधन आवंटन को अनुकूलित करें",
+      "resource-text": "उपज पूर्वानुमान के आधार पर पानी, उर्वरकों और श्रम जैसे संसाधनों का कुशलतापूर्वक प्रबंधन करें।",
+      "management-title": "फसल प्रबंधन में सुधार करें",
+      "management-text": "फसल प्रदर्शन में अंतर्दृष्टि प्राप्त करें और बेहतर परिणामों के लिए कृषि पद्धतियों को अपनाएं।",
+      "contact-subtitle": "हमसे संपर्क करें",
+      "contact-title": "संपर्क करें",
+      "contact-text": "इस परियोजना को नेताजी सुभाष इंजीनियरिंग कॉलेज के छात्रों द्वारा हमारी हैकाथॉन यात्रा के हिस्से के रूप में डिजाइन और विकसित किया गया है: आकाश राज, वसुधा बिस्वास, अंकित खन्ना, शिवम तिवारी, हर्ष आनंद, सत्यम शुभम।",
+      "contact-button": "हमसे संपर्क करें",
+      "copyright": "© 2025 एग्रीविजन। सर्वाधिकार सुरक्षित।",
+      "footer-text": "किसानों के लिए कृतज्ञता के साथ बनाया गया ❤"
+    },
+    bn: {
+          "nav-home": "হোম",
+    "nav-about": "সম্পর্কে",
+    "nav-features": "বৈশিষ্ট্য",
+    "nav-benefits": "সুবিধা",
+    "nav-contact": "যোগাযোগ",
+    "nav-get-started": "শুরু করুন",
+      "main-heading": "সঠিকভাবে আপনার ফসলের ফলন ভবিষ্যদ্বাণী করুন",
+      "main-subtitle": "ফসলের ফলন সঠিকভাবে ভবিষ্যদ্বাণী করতে উন্নত মেশিন লার্নিং মডেল ব্যবহার করুন, আপনার কৃষি পরিকল্পনা এবং সম্পদ ব্যবস্থাপনা অপ্টিমাইজ করুন।",
+      "smarter": "চালাক",
+      "insights": "ইনসাইট।",
+      "higher": "উচ্চ",
+      "yields": "ফলন।",
+      "better": "ভাল",
+      "lives": "জীবন।",
+      "start-predicting": "এখনই ভবিষ্যদ্বাণী শুরু করুন",
+      "about-title": "🌱 আমাদের সম্পর্কে",
+      "about-text-1": "এগ্রিভিশন কৃষকদের সঠিক এবং নির্ভরযোগ্য ফসল ফলন ভবিষ্যদ্বাণী প্রদানের জন্য অত্যাধুনিক মেশিন লার্নিং এর শক্তি কাজে লাগায়। আমাদের অত্যাধুনিক মডেল কর্মযোগ্য অন্তর্দৃষ্টি প্রদানের জন্য ডেটা পয়েন্টগুলির একটি বিস্তৃত অ্যারে বিশ্লেষণ করে, যা আপনাকে আরও লাভজনক এবং টেকসই খামারের জন্য smarter সিদ্ধান্ত নিতে সাহায্য করে।",
+      "about-text-2": "এই প্রকল্পে, আমরা একটি AI-চালিত ফসল ফলন ভবিষ্যদ্বাণী এবং অপ্টিমাইজেশন প্ল্যাটফর্ম তৈরি করেছি যা উৎপাদনশীলতা ভবিষ্যদ্বাণী করতে আবহাওয়া ডেটা, মাটি মেট্রিক্স এবং historical ফসল ফলন ব্যবহার করে। ভবিষ্যদ্বাণীর পাশাপাশি, আমাদের সিস্টেম সেচ, সার প্রয়োগ এবং পোকা ব্যবস্থাপনার জন্য কর্মযোগ্য সুপারিশ প্রদান করে - যা কৃষকদের ফলন বাড়াতে এবং ঝুঁকি কমাতে সাহায্য করে।",
+      "how-it-works": "এটি কিভাবে কাজ করে",
+      "how-it-works-text": "আমাদের মডেল historical আবহাওয়া patterns, মাটি স্বাস্থ্য ডেটা, satellite imagery এবং আপনার নির্দিষ্ট ফসলের তথ্য একীভূত করে। উন্নত অ্যালগরিদম then আপনার ক্ষেত্রের জন্য অত্যন্ত সঠিক ফলন ভবিষ্যদ্বাণী generate করতে এই ডেটা process করে।",
+      "key-features": "মূল বৈশিষ্ট্য",
+      "feature-1": "সঠিক, field-level ফলন ভবিষ্যদ্বাণী।",
+      "feature-2": "বিবিধ ডেটা উৎসের integration।",
+      "feature-3": "সহজ বিশ্লেষণের জন্য user-friendly dashboard।",
+      "feature-4": "practices optimize করার জন্য কর্মযোগ্য অন্তর্দৃষ্টি।",
+      "benefits-title": "সুবিধা",
+      "benefit-1": "ডেটা-চালিত সিদ্ধান্ত নেওয়ার মাধ্যমে লাভজনকতা maximize করুন।",
+      "benefit-2": "দক্ষতার জন্য resource allocation optimize করুন।",
+      "benefit-3": "ফলন outcomes anticipate করে ঝুঁকি mitigate করুন।",
+      "benefit-4": "সামগ্রিক farm management এবং sustainability enhance করুন।",
+      "features-subtitle": "মূল বৈশিষ্ট্য",
+      "features-title": "আধুনিক কৃষির জন্য শক্তিশালী সরঞ্জাম",
+      "analytics-title": "উন্নত analytics",
+      "analytics-text": "সঠিক ফলন ভবিষ্যদ্বাণীর জন্য অত্যাধুনিক মেশিন লার্নিং techniques ব্যবহার করে।",
+      "data-title": "সম্পূর্ণ ডেটা integration",
+      "data-text": "ফসল ফলন factors এর একটি holistic view এর জন্য বিবিধ ডেটা sources combine করে।",
+      "interface-title": "ব্যবহারকারী-বান্ধব interface",
+      "interface-text": "সহজ navigation এবং efficient data interpretation এর জন্য intuitive design।",
+      "benefits-subtitle": "সুবিধা",
+      "benefits-title-main": "আপনার খামারের পূর্ণ potential unlock করুন",
+      "profitability-title": "লাভজনকতা maximize করুন",
+      "profitability-text": "ফলন improve এবং revenue increase করতে data-driven decisions নিন।",
+      "resource-title": "Resource allocation optimize করুন",
+      "resource-text": "ফলন forecasts এর ভিত্তিতে water, fertilizers, এবং labor এর মতো resources efficiently manage করুন।",
+      "management-title": "ফসল management enhance করুন",
+      "management-text": "ফসল performance সম্পর্কে insights gain করুন এবং better outcomes এর জন্য farming practices adapt করুন।",
+      "contact-subtitle": "যোগাযোগ করুন",
+      "contact-title": "যোগাযোগ করুন",
+      "contact-text": "এই প্রকল্পটি নেতাজি সুভাষ ইঞ্জিনিয়ারিং কলেজের students দ্বারা আমাদের hackathon journey এর অংশ হিসাবে designed এবং developed হয়েছে: আকাশ রাজ, Vasudha Biswas, Ankit Khanna, Shivam Tiwari, Harsh Anand, Satyam Shubham।",
+      "contact-button": "যোগাযোগ করুন",
+      "copyright": "© 2025 AgriVision. সর্বস্বত্ব সংরক্ষিত।",
+      "footer-text": "কৃষকদের জন্য কৃতজ্ঞতা সহ তৈরি ❤"
+    },
+    pa: {
+      "nav-home": "ਹੋਮ",
+    "nav-about": "ਬਾਰੇ",
+    "nav-features": "ਵਿਸ਼ੇਸ਼ਤਾਵਾਂ",
+    "nav-benefits": "ਫਾਇਦੇ",
+    "nav-contact": "ਸੰਪਰਕ ਕਰੋ",
+    "nav-get-started": "ਸ਼ੁਰੂ ਕਰੋ",
+      "main-heading": "ਆਪਣੀ ਫਸਲ ਦੀ ਪੈਦਾਵਾਰ ਦੀ ਸਹੀ ਭਵਿੱਖਬਾਣੀ ਕਰੋ",
+      "main-subtitle": "ਫਸਲ ਦੀ ਪੈਦਾਵਾਰ ਦੀ ਸਹੀ ਭਵਿੱਖਬਾਣੀ ਕਰਨ ਲਈ ਉਨ੍ਹਾਂਤ ਮਸ਼ੀਨ ਲਰਨਿੰਗ ਮਾਡਲਾਂ ਦਾ ਫਾਇਦਾ ਉਠਾਓ, ਆਪਣੀ ਖੇਤੀਬਾੜੀ ਯੋਜਨਾਬੰਦੀ ਅਤੇ ਸਰੋਤ ਪ੍ਰਬੰਧਨ ਨੂੰ ਆਪਟੀਮਾਈਜ਼ ਕਰੋ।",
+      "smarter": "ਹੋਸ਼ਿਆਰ",
+      "insights": "ਅੰਦਰੂਨੀ ਦ੍ਰਿਸ਼ਟੀ।",
+      "higher": "ਉੱਚ",
+      "yields": "ਪੈਦਾਵਾਰ।",
+      "better": "ਬਿਹਤਰ",
+      "lives": "ਜੀਵਨ।",
+      "start-predicting": "ਹੁਣੇ ਭਵਿੱਖਬਾਣੀ ਸ਼ੁਰੂ ਕਰੋ",
+      "about-title": "🌱 ਸਾਡੇ ਬਾਰੇ",
+      "about-text-1": "ਐਗਰੀਵਿਜ਼ਨ ਕਿਸਾਨਾਂ ਨੂੰ ਸਹੀ ਅਤੇ ਭਰੋਸੇਯੋਗ ਫਸਲ ਪੈਦਾਵਾਰ ਭਵਿੱਖਬਾਣੀ ਪ੍ਰਦਾਨ ਕਰਨ ਲਈ ਕੱਟਿੰਗ-ਐਜ ਮਸ਼ੀਨ ਲਰਨਿੰਗ ਦੀ ਸ਼ਕਤੀ ਦੀ ਵਰਤੋਂ ਕਰਦਾ ਹੈ। ਸਾਡਾ ਸੋਫਿਸਟੀਕੇਟਿਡ ਮਾਡਲ ਕਾਰਵਾਈ ਯੋਗ ਅੰਦਰੂਨੀ ਦ੍ਰਿਸ਼ਟੀ ਪ੍ਰਦਾਨ ਕਰਨ ਲਈ ਡੇਟਾ ਪੁਆਇੰਟਾਂ ਦੀ ਇੱਕ ਵਿਸਤ੍ਰਿਤ ਸ਼੍ਰੇਣੀ ਦਾ ਵਿਸ਼ਲੇਸ਼ਣ ਕਰਦਾ ਹੈ, ਜੋ ਤੁਹਾਨੂੰ ਇੱਕ ਵਧੇਰੇ ਲਾਭਦਾਇਕ ਅਤੇ ਟਿਕਾਊ ਫਾਰਮ ਲਈ ਹੋਸ਼ਿਆਰ ਫੈਸਲੇ ਲੈਣ ਵਿੱਚ ਮਦਦ ਕਰਦਾ ਹੈ।",
+      "about-text-2": "ਇਸ ਪ੍ਰੋਜੈਕਟ ਵਿੱਚ, ਅਸੀਂ ਇੱਕ AI-ਸੰਚਾਲਿਤ ਫਸਲ ਪੈਦਾਵਾਰ ਭਵਿੱਖਬਾਣੀ ਅਤੇ ਆਪਟੀਮਾਈਜ਼ੇਸ਼ਨ ਪਲੇਟਫਾਰਮ ਵਿਕਸਤ ਕੀਤਾ ਹੈ ਜੋ ਉਤਪਾਦਕਤਾ ਦੀ ਭਵਿੱਖਬਾਣੀ ਕਰਨ ਲਈ ਮੌਸਮ ਡੇਟਾ, ਮਿੱਟੀ ਮੈਟ੍ਰਿਕਸ ਅਤੇ ਇਤਿਹਾਸਕ ਫਸਲ ਪੈਦਾਵਾਰ ਦੀ ਵਰਤੋਂ ਕਰਦਾ ਹੈ। ਭਵਿੱਖਬਾਣੀਆਂ ਦੇ ਨਾਲ, ਸਾਡਾ ਸਿਸਟਮ ਸਿੰਜਾਈ, ਖਾਦ ਅਤੇ ਕੀੜਾ ਪ੍ਰਬੰਧਨ ਲਈ ਕਾਰਵਾਈ ਯੋਗ ਸਿਫਾਰਸ਼ਾਂ ਪ੍ਰਦਾਨ ਕਰਦਾ ਹੈ - ਜੋ ਕਿਸਾਨਾਂ ਨੂੰ ਪੈਦਾਵਾਰ ਵਧਾਉਣ ਅਤੇ ਜੋਖਮਾਂ ਨੂੰ ਘਟਾਉਣ ਵਿੱਚ ਮਦਦ ਕਰਦਾ ਹੈ।",
+      "how-it-works": "ਇਹ ਕਿਵੇਂ ਕੰਮ ਕਰਦਾ ਹੈ",
+      "how-it-works-text": "ਸਾਡਾ ਮਾਡਲ ਇਤਿਹਾਸਕ ਮੌਸਮ ਪੈਟਰਨ, ਮਿੱਟੀ ਸਿਹਤ ਡੇਟਾ, ਸੈਟੇਲਾਈਟ ਚਿੱਤਰ ਅਤੇ ਤੁਹਾਡੀ ਵਿਸ਼ੇਸ਼ ਫਸਲ ਜਾਣਕਾਰੀ ਨੂੰ ਏਕੀਕ੍ਰਿਤ ਕਰਦਾ ਹੈ। ਉਨ੍ਹਾਂਤ ਐਲਗੋਰਿਦਮ ਫਿਰ ਤੁਹਾਡੇ ਖੇਤਾਂ ਲਈ ਅਤਿਅੰਤ ਸਹੀ ਪੈਦਾਵਾਰ ਭਵਿੱਖਬਾਣੀਆਂ ਤਿਆਰ ਕਰਨ ਲਈ ਇਸ ਡੇਟਾ ਨੂੰ ਪ੍ਰੋਸੈਸ ਕਰਦੇ ਹਨ।",
+      "key-features": "ਮੁੱਖ ਵਿਸ਼ੇਸ਼ਤਾਵਾਂ",
+      "feature-1": "ਸਹੀ, ਖੇਤ-ਸਤਰੀ ਪੈਦਾਵਾਰ ਭਵਿੱਖਬਾਣੀਆਂ।",
+      "feature-2": "ਵਿਭਿੰਨ ਡੇਟਾ ਸਰੋਤਾਂ ਦਾ ਏਕੀਕਰਨ।",
+      "feature-3": "ਆਸਾਨ ਵਿਸ਼ਲੇਸ਼ਣ ਲਈ ਯੂਜ਼ਰ-ਫਰੈਂਡਲੀ ਡੈਸ਼ਬੋਰਡ।",
+      "feature-4": "ਅਭਿਆਸਾਂ ਨੂੰ ਆਪਟੀਮਾਈਜ਼ ਕਰਨ ਲਈ ਕਾਰਵਾਈ ਯੋਗ ਅੰਦਰੂਨੀ ਦ੍ਰਿਸ਼ਟੀ।",
+      "benefits-title": "ਫਾਇਦੇ",
+      "benefit-1": "ਡੇਟਾ-ਸੰਚਾਲਿਤ ਫੈਸਲੇ ਲੈਕੇ ਲਾਭਦਾਇਕਤਾ ਨੂੰ ਵੱਧ ਤੋਂ ਵੱਧ ਕਰੋ।",
+      "benefit-2": "ਕੁਸ਼ਲਤਾ ਲਈ ਸਰੋਤਾਂ ਦੀ ਵੰਡ ਨੂੰ ਆਪਟੀਮਾਈਜ਼ ਕਰੋ।",
+      "benefit-3": "ਪੈਦਾਵਾਰ ਨਤੀਜਿਆਂ ਦੀ ਉਮੀਦ ਕਰਕੇ ਜੋਖਮਾਂ ਨੂੰ ਘਟਾਓ।",
+      "benefit-4": "ਸਮੁੱਚੇ ਫਾਰਮ ਪ੍ਰਬੰਧਨ ਅਤੇ ਟਿਕਾਊਤਾ ਨੂੰ ਵਧਾਓ।",
+      "features-subtitle": "ਮੁੱਖ ਵਿਸ਼ੇਸ਼ਤਾਵਾਂ",
+      "features-title": "ਆਧੁਨਿਕ ਖੇਤੀਬਾੜੀ ਲਈ ਸ਼ਕਤੀਸ਼ਾਲੀ ਔਜ਼ਾਰ",
+      "analytics-title": "ਉਨ੍ਹਾਂਤ ਵਿਸ਼ਲੇਸ਼ਣ",
+      "analytics-text": "ਸਹੀ ਪੈਦਾਵਾਰ ਭਵਿੱਖਬਾਣੀਆਂ ਲਈ ਕੱਟਿੰਗ-ਐਜ ਮਸ਼ੀਨ ਲਰਨਿੰਗ ਤਕਨੀਕਾਂ ਦੀ ਵਰਤੋਂ ਕਰਦਾ ਹੈ।",
+      "data-title": "ਵਿਆਪਕ ਡੇਟਾ ਏਕੀਕਰਨ",
+      "data-text": "ਫਸਲ ਪੈਦਾਵਾਰ ਕਾਰਕਾਂ ਦੇ ਇੱਕ ਸਮੁੱਚੇ ਦ੍ਰਿਸ਼ਟੀਕੋਣ ਲਈ ਵਿਭਿੰਨ ਡੇਟਾ ਸਰੋਤਾਂ ਨੂੰ ਜੋੜਦਾ ਹੈ।",
+      "interface-title": "ਯੂਜ਼ਰ-ਫਰੈਂਡਲੀ ਇੰਟਰਫੇਸ",
+      "interface-text": "ਆਸਾਨ ਨੇਵੀਗੇਸ਼ਨ ਅਤੇ ਕੁਸ਼ਲ ਡੇਟਾ ਵਿਆਖਿਆ ਲਈ ਸਹਜ ਡਿਜ਼ਾਈਨ।",
+      "benefits-subtitle": "ਫਾਇਦੇ",
+      "benefits-title-main": "ਆਪਣੇ ਫਾਰਮ ਦੀ ਪੂਰੀ ਸੰਭਾਵਨਾ ਨੂੰ ਅਨਲੌਕ ਕਰੋ",
+      "profitability-title": "ਲਾਭਦਾਇਕਤਾ ਨੂੰ ਵੱਧ ਤੋਂ ਵੱਧ ਕਰੋ",
+      "profitability-text": "ਪੈਦਾਵਾਰ ਵਿੱਚ ਸੁਧਾਰ ਅਤੇ ਆਮਦਨੀ ਵਧਾਉਣ ਲਈ ਡੇਟਾ-ਸੰਚਾਲਿਤ ਫੈਸਲੇ ਲਓ।",
+      "resource-title": "ਸਰੋਤਾਂ ਦੀ ਵੰਡ ਨੂੰ ਆਪਟੀਮਾਈਜ਼ ਕਰੋ",
+      "resource-text": "ਪੈਦਾਵਾਰ ਭਵਿੱਖਬਾਣੀਆਂ ਦੇ ਆਧਾਰ 'ਤੇ ਪਾਣੀ, ਖਾਦ ਅਤੇ ਮਜ਼ਦੂਰੀ ਵਰਗੇ ਸਰੋਤਾਂ ਦਾ ਕੁਸ਼ਲਤਾ ਨਾਲ ਪ੍ਰਬੰਧਨ ਕਰੋ।",
+      "management-title": "ਫਸਲ ਪ੍ਰਬੰਧਨ ਨੂੰ ਵਧਾਓ",
+      "management-text": "ਫਸਲ ਪ੍ਰਦਰਸ਼ਨ ਬਾਰੇ ਅੰਦਰੂਨੀ ਦ੍ਰਿਸ਼ਟੀ ਪ੍ਰਾਪਤ ਕਰੋ ਅਤੇ ਬਿਹਤਰ ਨਤੀਜਿਆਂ ਲਈ ਖੇਤੀਬਾੜੀ ਅਭਿਆਸਾਂ ਨੂੰ ਅਨੁਕੂਲਿਤ ਕਰੋ।",
+      "contact-subtitle": "ਸਾਡੇ ਨਾਲ ਸੰਪਰਕ ਕਰੋ",
+      "contact-title": "ਸੰਪਰਕ ਕਰੋ",
+      "contact-text": "ਇਸ ਪ੍ਰੋਜੈਕਟ ਨੂੰ ਨੇਤਾਜੀ ਸੁਭਾਸ਼ ਇੰਜੀਨੀਅਰਿੰਗ ਕਾਲਜ ਦੇ ਵਿਦਿਆਰਥੀਆਂ ਦੁਆਰਾ ਸਾਡੀ ਹੈਕਾਥਾਨ ਯਾਤਰਾ ਦੇ ਹਿੱਸੇ ਵਜੋਂ ਡਿਜ਼ਾਈਨ ਅਤੇ ਵਿਕਸਤ ਕੀਤਾ ਗਿਆ ਹੈ: ਆਕਾਸ਼ ਰਾਜ, ਵਸੁਧਾ ਬਿਸਵਾਸ, ਅੰਕਿਤ ਖੰਨਾ, ਸ਼ਿਵਮ ਤਿਵਾਰੀ, ਹਰਸ਼ ਆਨੰਦ, ਸੱਤਿਆਮ ਸ਼ੁਭਮ।",
+      "contact-button": "ਸਾਡੇ ਨਾਲ ਸੰਪਰਕ ਕਰੋ",
+      "copyright": "© 2025 ਐਗਰੀਵਿਜ਼ਨ। ਸਾਰੇ ਅਧਿਕਾਰ ਸੁਰਕਿਤ।",
+      "footer-text": "ਕਿਸਾਨਾਂ ਲਈ ਕ੍ਰਿਤਜ਼ਤਾ ਨਾਲ ਬਣਾਇਆ ਗਿਆ ❤"
+    },
+    or: {
+       "nav-home": "ହୋମ",
+    "nav-about": "ବିଷୟରେ",
+    "nav-features": "ବିଶେଷତାବଳୀ",
+    "nav-benefits": "ସୁବିଧାଗୁଡିକ",
+    "nav-contact": "ସମ୍ପର୍କ କରନ୍ତୁ",
+    "nav-get-started": "ଆରମ୍ଭ କରନ୍ତୁ",
+      "main-heading": "ଆପଣଙ୍କର ଫସଲ ଉତ୍ପାଦନକୁ ସଠିକ୍ ଭାବରେ ଭବିଷ୍ୟବାଣୀ କରନ୍ତୁ |",
+      "main-subtitle": "ଫସଲ ଉତ୍ପାଦନକୁ ସଠିକ୍ ଭାବରେ ଭବିଷ୍ୟବାଣୀ କରିବା ପାଇଁ ଉନ୍ନତ ମେସିନ୍ ଲର୍ଣ୍ଣିଂ ମଡେଲଗୁଡିକର ଉପଯୋଗ କରନ୍ତୁ, ଆପଣଙ୍କର କୃଷି ଯୋଜନା ଏବଂ ସମ୍ବଳ ପରିଚାଳନାକୁ ଅପ୍ଟିମାଇଜ୍ କରନ୍ତୁ |",
+      "smarter": "ଚତୁର",
+      "insights": "ଅନ୍ତର୍ଦୃଷ୍ଟି |",
+      "higher": "ଉଚ୍ଚ",
+      "yields": "ଫଳନ |",
+      "better": "ଭଲ",
+      "lives": "ଜୀବନ |",
+      "start-predicting": "ବର୍ତ୍ତମାନ ଭବିଷ୍ୟବାଣୀ ଆରମ୍ଭ କରନ୍ତୁ |",
+      "about-title": "🌱 ଆମ ବିଷୟରେ",
+      "about-text-1": "AgriVision ଚାଷୀମାନଙ୍କୁ ସଠିକ୍ ଏବଂ ବିଶ୍ୱସନୀୟ ଫସଲ ଉତ୍ପାଦନ ଭବିଷ୍ୟବାଣୀ ପ୍ରଦାନ କରିବା ପାଇଁ କଟିଂ-ଏଜ୍ ମେସିନ୍ ଲର୍ଣ୍ଣିଂର ଶକ୍ତି ବ୍ୟବହାର କରେ | ଆମର ଉନ୍ନତ ମଡେଲ କାର୍ଯ୍ୟକାରୀ ଅନ୍ତର୍ଦୃଷ୍ଟି ପ୍ରଦାନ କରିବା ପାଇଁ ଡାଟା ପଏଣ୍ଟଗୁଡିକର ଏକ ବିସ୍ତୃତ ଶ୍ରେଣୀର ବିଶ୍ଳେଷଣ କରେ, ଯାହା ଆପଣଙ୍କୁ ଅଧିକ ଲାଭଦାୟକ ଏବଂ ସ୍ଥାୟୀ ଫାର୍ମ ପାଇଁ ଚତୁର ନିଷ୍ପତ୍ତି ନେବାରେ ସାହାଯ୍ୟ କରେ |",
+      "about-text-2": "ଏହି ପ୍ରୋଜେକ୍ଟରେ, ଆମେ ଏକ AI-ଚାଳିତ ଫସଲ ଉତ୍ପାଦନ ଭବିଷ୍ୟବାଣୀ ଏବଂ ଅପ୍ଟିମାଇଜେସନ୍ ପ୍ଲାଟଫର୍ମ ବିକଶିତ କରିଛୁ ଯାହା ଉତ୍ପାଦକତା ଭବିଷ୍ୟବାଣୀ କରିବା ପାଇଁ ପାଗ ଡାଟା, ମୃତ୍ତିକା ମେଟ୍ରିକ୍ସ ଏବଂ historical ତିହାସିକ ଫସଲ ଉତ୍ପାଦନକୁ ବ୍ୟବହାର କରେ | ଭବିଷ୍ୟବାଣୀ ସହିତ, ଆମର ସିଷ୍ଟମ୍ ସିଞ୍ଚାଇ, ସାର ପ୍ରୟୋଗ ଏବଂ କୀଟ ପରିଚାଳନା ପାଇଁ କାର୍ଯ୍ୟକାରୀ ସୁପାରିଶ ପ୍ରଦାନ କରେ - ଯାହା ଚାଷୀମାନଙ୍କୁ ଉତ୍ପାଦନ ବୃଦ୍ଧି କରିବା ଏବଂ ବିପଦ ହ୍ରାସ କରିବାରେ ସାହାଯ୍ୟ କରେ |",
+      "how-it-works": "ଏହା କିପରି କାମ କରେ",
+      "how-it-works-text": "ଆମର ମଡେଲ historical ତିହାସିକ ପାଗ ପ୍ୟାଟର୍ନ, ମୃତ୍ତିକା ସ୍ୱାସ୍ଥ୍ୟ ଡାଟା, ସ୍ୟାଟେଲାଇଟ ଇମେଜରୀ ଏବଂ ଆପଣଙ୍କର ନିର୍ଦ୍ଦିଷ୍ଟ ଫସଲ ସୂଚନାକୁ ସମନ୍ୱିତ କରେ | ଉନ୍ନତ ଆଲଗୋରିଦମ୍ ତା'ପରେ ଆପଣଙ୍କ କ୍ଷେତ୍ରଗୁଡିକ ପାଇଁ ଅତ୍ୟଧିକ ସଠିକ୍ ଉତ୍ପାଦନ ଭବିଷ୍ୟବାଣୀ ସୃଷ୍ଟି କରିବା ପାଇଁ ଏହି ଡାଟାକୁ ପ୍ରକ୍ରିୟାକରଣ କରେ |",
+      "key-features": "ମୁଖ୍ୟ ବିଶେଷତାବଳୀ",
+      "feature-1": "ସଠିକ୍, କ୍ଷେତ୍ର-ସ୍ତରୀୟ ଉତ୍ପାଦନ ଭବିଷ୍ୟବାଣୀ |",
+      "feature-2": "ବିବିଧ ଡାଟା ସ୍ରୋତର ସମନ୍ୱୟ |",
+      "feature-3": "ସହଜ ବିଶ୍ଳେଷଣ ପାଇଁ ଉପଯୋଗକର୍ତ୍ତା-ବନ୍ଧୁତ୍ୱପୂର୍ଣ୍ଣ ଡ୍ୟାସବୋର୍ଡ |",
+      "feature-4": "ଅଭ୍ୟାସକୁ ଅପ୍ଟିମାଇଜ୍ କରିବା ପାଇଁ କାର୍ଯ୍ୟକାରୀ ଅନ୍ତର୍ଦୃଷ୍ଟି |",
+      "benefits-title": "ସୁବିଧାଗୁଡିକ",
+      "benefit-1": "ଡାଟା-ଚାଳିତ ନିଷ୍ପତ୍ତି ସହିତ ଲାଭଦାୟକତା ଅଧିକତମ କରନ୍ତୁ |",
+      "benefit-2": "ଦକ୍ଷତା ପାଇଁ ସମ୍ବଳ ବଣ୍ଟନ ଅପ୍ଟିମାଇଜ୍ କରନ୍ତୁ |",
+      "benefit-3": "ଉତ୍ପାଦନ ଫଳାଫଳକୁ ଆଶା କରି ବିପଦଗୁଡିକ ହ୍ରାସ କରନ୍ତୁ |",
+      "benefit-4": "ସାମଗ୍ରିକ ଫାର୍ମ ପରିଚାଳନା ଏବଂ ସ୍ଥିରତା ବୃଦ୍ଧି କରନ୍ତୁ |",
+      "features-subtitle": "ମୁଖ୍ୟ ବିଶେଷତାବଳୀ",
+      "features-title": "ଆଧୁନିକ କୃଷି ପାଇଁ ଶକ୍ତିଶାଳୀ ଉପକରଣ",
+      "analytics-title": "ଉନ୍ନତ ଆନାଲିଟିକ୍ସ",
+      "analytics-text": "ସଠିକ୍ ଉତ୍ପାଦନ ଭବିଷ୍ୟବାଣୀ ପାଇଁ କଟିଂ-ଏଜ୍ ମେସିନ୍ ଲର୍ଣ୍ଣିଂ ଟେକନିକ୍ ବ୍ୟବହାର କରେ |",
+      "data-title": "ବିସ୍ତୃତ ଡାଟା ଏକୀକରଣ",
+      "data-text": "ଫସଲ ଉତ୍ପାଦନ କାରକଗୁଡିକର ଏକ ସମ୍ପୂର୍ଣ୍ଣ ଦୃଷ୍ଟିକୋଣ ପାଇଁ ବିବିଧ ଡାଟା ସ୍ରୋତକୁ ମିଶାଇଥାଏ |",
+      "interface-title": "ଉପଯୋଗକର୍ତ୍ତା-ବନ୍ଧୁତ୍ୱପୂର୍ଣ୍ଣ ଇଣ୍ଟରଫେସ",
+      "interface-text": "ସହଜ ନେଭିଗେସନ୍ ଏବଂ କାର୍ଯ୍ୟକ୍ଷମ ଡାଟା ବ୍ୟାଖ୍ୟା ପାଇଁ ସହଜ ଡିଜାଇନ୍ |",
+      "benefits-subtitle": "ସୁବିଧାଗୁଡିକ",
+      "benefits-title-main": "ଆପଣଙ୍କ ଫାର୍ମର ସମ୍ପୂର୍ଣ୍ଣ ସମ୍ଭାବନା ଖୋଲନ୍ତୁ |",
+      "profitability-title": "ଲାଭଦାୟକତା ଅଧିକତମ କରନ୍ତୁ |",
+      "profitability-text": "ଉତ୍ପାଦନ ଉନ୍ନତ କରିବା ଏବଂ ଆୟ ବୃଦ୍ଧି କରିବା ପାଇଁ ଡାଟା-ଚାଳିତ ନିଷ୍ପତ୍ତି ନିଅନ୍ତୁ |",
+      "resource-title": "ସମ୍ବଳ ବଣ୍ଟନ ଅପ୍ଟିମାଇଜ୍ କରନ୍ତୁ |",
+      "resource-text": "ଉତ୍ପାଦନ ଭବିଷ୍ୟବାଣୀ ଉପରେ ଆଧାରିତ ଜଳ, ସାର ଏବଂ ଶ୍ରମ ଭଳି ସମ୍ବଳଗୁଡିକର କାର୍ଯ୍ୟକ୍ଷମ ପରିଚାଳନା କରନ୍ତୁ |",
+      "management-title": "ଫସଲ ପରିଚାଳନା ବୃଦ୍ଧି କରନ୍ତୁ |",
+      "management-text": "ଫସଲ ପ୍ରଦର୍ଶନ ବିଷୟରେ ଅନ୍ତର୍ଦୃଷ୍ଟି ପ୍ରାପ୍ତ କରନ୍ତୁ ଏବଂ ଉନ୍ନତ ଫଳାଫଳ ପାଇଁ କୃଷି ଅଭ୍ୟାସଗୁଡିକୁ ଅନୁକୂଳ କରନ୍ତୁ |",
+      "contact-subtitle": "ଆମ ସହିତ ଯୋଗାଯୋଗ କରନ୍ତୁ |",
+      "contact-title": "ଯୋଗାଯୋଗ କରନ୍ତୁ |",
+      "contact-text": "ଏହି ପ୍ରୋଜେକ୍ଟଟି ନେତାଜୀ ସୁଭାଷ ଇଞ୍ଜିନିୟରିଂ କଲେଜର ଛାତ୍ରମାନଙ୍କ ଦ୍ୱାରା ଆମର ହ୍ୟାକାଥନ୍ ଯାତ୍ରାର ଅଂଶ ଭାବରେ ଡିଜାଇନ୍ ଏବଂ ବିକଶିତ କରାଯାଇଛି: ଆକାଶ ରାଜ, ବସୁଧା ବିଶ୍ୱାସ, ଅଙ୍କିତ ଖନ୍ନା, ଶିବମ ତିବାରୀ, ହର୍ଷ ଆନନ୍ଦ, ସତ୍ୟମ୍ ଶୁଭମ୍ |",
+      "contact-button": "ଆମ ସହିତ ଯୋଗାଯୋଗ କରନ୍ତୁ |",
+      "copyright": "© 2025 AgriVision. ସମସ୍ତ ଅଧିକାର ସଂରକ୍ଷିତ |",
+      "footer-text": "କୃତଜ୍ଞତା ସହିତ ଚାଷୀମାନଙ୍କ ପାଇଁ ତିଆରି ❤"
+    },
+
+ta: {
+  "nav-home": "முகப்பு",
+  "nav-about": "எங்களைப் பற்றி",
+  "nav-features": "அம்சங்கள்",
+  "nav-benefits": "நன்மைகள்",
+  "nav-contact": "தொடர்பு கொள்ளவும்",
+  "nav-get-started": "தொடங்குங்கள்",
+  "main-heading": "துல்லியத்துடன் உங்கள் பயிர் விளைச்சலை முன்னறிவிக்கவும்",
+  "main-subtitle": "பயிர் விளைச்சலை துல்லியமாக முன்னறிவிக்க மேம்பட்ட இயந்திர கற்றல் மாதிரிகளைப் பயன்படுத்தி, உங்கள் விவசாய திட்டமிடல் மற்றும் வள நிர்வாகத்தை மேம்படுத்துங்கள்.",
+  "smarter": "புத்திசாலித்தனமான",
+  "insights": "நுண்ணறிவுகள்.",
+  "higher": "அதிக",
+  "yields": "விளைச்சல்.",
+  "better": "சிறந்த",
+  "lives": "வாழ்க்கை.",
+  "start-predicting": "இப்போது முன்னறிவிக்க ஆரம்பிக்கவும்",
+  "about-title": "🌱 எங்களைப் பற்றி",
+  "about-text-1": "AgriVision விவசாயிகளுக்கு துல்லியமான மற்றும் நம்பகமான பயிர் விளைச்சல் முன்னறிவிப்புகளை வழங்க அதிநவீன இயந்திர கற்றலின் சக்தியைப் பயன்படுத்துகிறது. எங்கள் அதிநவீன மாதிரி செயல்படக்கூடிய நுண்ணறிவுகளை வழங்க தரவு புள்ளிகளின் பரந்த வரிசையை பகுப்பாய்வு செய்கிறது, இது அதிக லாபகரமான மற்றும் நிலையான பண்ணைக்கான புத்திசாலித்தனமான முடிவுகளை எடுக்க உதவுகிறது.",
+  "about-text-2": "இந்த திட்டத்தில், உற்பத்தித்திறனை முன்னறிவிக்க வானிலை தரவு, மண் அளவீடுகள் மற்றும் வரலாற்று பயிர் விளைச்சலைப் பயன்படுத்தும் AI-இயங்கும் பயிர் விளைச்சல் முன்கணிப்பு மற்றும் மேம்படுத்தல் தளத்தை நாங்கள் உருவாக்கியுள்ளோம். முன்னறிவிப்புகளுடன், எங்கள் அமைப்பு நீர்ப்பாசனம், உரமிடுதல் மற்றும் பூச்சி நிர்வாகத்திற்கான செயல்படக்கூடிய பரிந்துரைகளை வழங்குகிறது—விவசாயிகளுக்கு விளைச்சலை அதிகரிக்கவும் அபாயங்களைக் குறைக்கவும் உதவுகிறது.",
+  "how-it-works": "இது எவ்வாறு செயல்படுகிறது",
+  "how-it-works-text": "எங்கள் மாதிரி வரலாற்று வானிலை வடிவங்கள், மண் ஆரோக்கிய தரவு, செயற்கைக்கோள் படங்கள் மற்றும் உங்கள் குறிப்பிட்ட பயிர் தகவலை ஒருங்கிணைக்கிறது. மேம்பட்ட அல்காரிதங்கள் உங்கள் வயல்களுக்கு மிகவும் துல்லியமான விளைச்சல் முன்னறிவிப்புகளை உருவாக்க இந்த தரவை செயலாக்குகின்றன.",
+  "key-features": "முக்கிய அம்சங்கள்",
+  "feature-1": "துல்லியமான, வயல்-நிலை விளைச்சல் முன்னறிவிப்புகள்.",
+  "feature-2": "பல்வேறு தரவு மூலங்களின் ஒருங்கிணைப்பு.",
+  "feature-3": "எளிதான பகுப்பாய்விற்கான பயனர் நட்பு டாஷ்போர்டு.",
+  "feature-4": "நடைமுறைகளை மேம்படுத்த செயல்படக்கூடிய நுண்ணறிவுகள்.",
+  "benefits-title": "நன்மைகள்",
+  "benefit-1": "தரவு-உந்துதல் முடிவுகளுடன் லாபத்தை அதிகப்படுத்துங்கள்.",
+  "benefit-2": "திறனுக்காக வள ஒதுக்கீட்டை மேம்படுத்துங்கள்.",
+  "benefit-3": "விளைச்சல் விளைவுகளை எதிர்பார்த்து அபாயங்களைக் குறைக்கவும்.",
+  "benefit-4": "ஒட்டுமொத்த பண்ணை நிர்வாகம் மற்றும் நிலைத்தன்மையை மேம்படுத்துங்கள்.",
+  "features-subtitle": "முக்கிய அம்சங்கள்",
+  "features-title": "நவீன விவசாயத்திற்கான சக்திவாய்ந்த கருவிகள்",
+  "analytics-title": "மேம்பட்ட பகுப்பாய்வு",
+  "analytics-text": "துல்லியமான விளைச்சல் முன்னறிவிப்புகளுக்கு அதிநவீன இயந்திர கற்றல் நுட்பங்களைப் பயன்படுத்துகிறது.",
+  "data-title": "விரிவான தரவு ஒருங்கிணைப்பு",
+  "data-text": "பயிர் விளைச்சல் காரணிகளின் முழுமையான பார்வைக்காக பல்வேறு தரவு மூலங்களை ஒருங்கிணைக்கிறது.",
+  "interface-title": "பயனர் நட்பு இடைமுகம்",
+  "interface-text": "எளிதான வழிசெலுத்தல் மற்றும் திறமையான தரவு விளக்கத்திற்கான உள்ளுணர்வு வடிவமைப்பு.",
+  "benefits-subtitle": "நன்மைகள்",
+  "benefits-title-main": "உங்கள் பண்ணையின் முழு திறனையும் திறக்கவும்",
+  "profitability-title": "லாபத்தை அதிகப்படுத்துங்கள்",
+  "profitability-text": "விளைச்சலை மேம்படுத்தவும் வருவாயை அதிகரிக்கவும் தரவு-உந்துதல் முடிவுகளை எடுங்கள்.",
+  "resource-title": "வள ஒதுக்கீட்டை மேம்படுத்துங்கள்",
+  "resource-text": "விளைச்சல் முன்னறிவிப்புகளின் அடிப்படையில் நீர், உரங்கள் மற்றும் உழைப்பு போன்ற வளங்களை திறமையாக நிர்வகிக்கவும்.",
+  "management-title": "பயிர் நிர்வாகத்தை மேம்படுத்துங்கள்",
+  "management-text": "பயிர் செயல்திறன் பற்றிய நுண்ணறிவுகளைப் பெறுங்கள் மற்றும் சிறந்த விளைவுகளுக்காக விவசாய நடைமுறைகளை மாற்றியமைக்கவும்.",
+  "contact-subtitle": "எங்களைத் தொடர்பு கொள்ளுங்கள்",
+  "contact-title": "தொடர்பு கொள்ளவும்",
+  "contact-text": "இந்த திட்டம் நேதாஜி சுபாஷ் பொறியியல் கல்லூரியின் மாணவர்களால் எங்கள் ஹாக்கத்தான் பயணத்தின் ஒரு பகுதியாக வடிவமைக்கப்பட்டு உருவாக்கப்பட்டுள்ளது: ஆகாஷ் ராஜ், வசுதா பிஸ்வாஸ், அன்கித் கன்னா, ஷிவம் திவாரி, ஹர்ஷ் ஆனந்த், சத்யம் சுபம்.",
+  "contact-button": "எங்களைத் தொடர்பு கொள்ளுங்கள்",
+  "copyright": "© 2025 AgriVision. அனைத்து உரிமைகளும் பாதுகாக்கப்பட்டவை.",
+  "footer-text": "விவசாயிகளுக்காக நன்றியுடன் உருவாக்கப்பட்டது ❤"
+},
+
+// Marathi (mr) - मराठी
+mr: {
+  "nav-home": "होम",
+  "nav-about": "आमच्याबद्दल",
+  "nav-features": "वैशिष्ट्ये",
+  "nav-benefits": "फायदे",
+  "nav-contact": "संपर्क करा",
+  "nav-get-started": "सुरुवात करा",
+  "main-heading": "अचूकतेने आपल्या पिकाचे उत्पादन अंदाज करा",
+  "main-subtitle": "पिकाचे उत्पादन अचूकपणे अंदाज करण्यासाठी प्रगत मशीन लर्निंग मॉडेल्सचा लाभ घ्या, आपल्या कृषी नियोजन आणि संसाधन व्यवस्थापनास अनुकूल करा.",
+  "smarter": "हुशार",
+  "insights": "अंतर्दृष्टी.",
+  "higher": "उच्च",
+  "yields": "उत्पादन.",
+  "better": "चांगले",
+  "lives": "जीवन.",
+  "start-predicting": "आता अंदाज सुरू करा",
+  "about-title": "🌱 आमच्याबद्दल",
+  "about-text-1": "AgriVision शेतकऱ्यांना अचूक आणि विश्वसनीय पीक उत्पादन अंदाज देण्यासाठी अत्याधुनिक मशीन लर्निंगची शक्ती वापरते. आमचे अत्याधुनिक मॉडेल कार्यक्षम अंतर्दृष्टी देण्यासाठी डेटा पॉइंट्सच्या विस्तृत श्रेणीचे विश्लेषण करते, ज्यामुळे आपल्याला अधिक फायदेशीर आणि शाश्वत शेतीसाठी हुशार निर्णय घेण्यास मदत होते.",
+  "about-text-2": "या प्रकल्पात, आम्ही एक AI-संचालित पीक उत्पादन अंदाज आणि ऑप्टिमायझेशन प्लॅटफॉर्म विकसित केले आहे जे उत्पादकता अंदाज करण्यासाठी हवामान डेटा, माती मेट्रिक्स आणि ऐतिहासिक पीक उत्पादनाचा लाभ घेते. अंदाजांसोबत, आमची सिस्टीम सिंचन, खत आणि कीटक व्यवस्थापनासाठी कार्यक्षम शिफारसी प्रदान करते—शेतकऱ्यांना उत्पादन वाढवण्यास आणि जोखीम कमी करण्यास मदत करते.",
+  "how-it-works": "हे कसे काम करते",
+  "how-it-works-text": "आमचे मॉडेल ऐतिहासिक हवामान पॅटर्न, माती आरोग्य डेटा, उपग्रह इमेजरी आणि आपली विशिष्ट पीक माहिती एकत्रित करते. प्रगत अल्गोरिदम नंतर आपल्या शेतांसाठी अत्यंत अचूक उत्पादन अंदाज तयार करण्यासाठी हा डेटा प्रक्रिया करतात.",
+  "key-features": "मुख्य वैशिष्ट्ये",
+  "feature-1": "अचूक, शेत-पातळीवरील उत्पादन अंदाज.",
+  "feature-2": "विविध डेटा स्रोतांचे एकीकरण.",
+  "feature-3": "सोप्या विश्लेषणासाठी वापरकर्ता-अनुकूल डॅशबोर्ड.",
+  "feature-4": "प्रथा अनुकूल करण्यासाठी कार्यक्षम अंतर्दृष्टी.",
+  "benefits-title": "फायदे",
+  "benefit-1": "डेटा-संचालित निर्णयांसह नफा वाढवा.",
+  "benefit-2": "कार्यक्षमतेसाठी संसाधन वाटप अनुकूल करा.",
+  "benefit-3": "उत्पादन परिणामांची अपेक्षा करून जोखीम कमी करा.",
+  "benefit-4": "एकूण शेत व्यवस्थापन आणि शाश्वतता वाढवा.",
+  "features-subtitle": "मुख्य वैशिष्ट्ये",
+  "features-title": "आधुनिक शेतीसाठी शक्तिशाली साधने",
+  "analytics-title": "प्रगत विश्लेषणे",
+  "analytics-text": "अचूक उत्पादन अंदाजांसाठी अत्याधुनिक मशीन लर्निंग तंत्र वापरते.",
+  "data-title": "व्यापक डेटा एकीकरण",
+  "data-text": "पीक उत्पादन घटकांच्या संपूर्ण दृश्यासाठी विविध डेटा स्रोत एकत्रित करते.",
+  "interface-title": "वापरकर्ता-अनुकूल इंटरफेस",
+  "interface-text": "सोपे नेव्हिगेशन आणि कार्यक्षम डेटा स्पष्टीकरणासाठी सहज डिझाइन.",
+  "benefits-subtitle": "फायदे",
+  "benefits-title-main": "आपल्या शेताची संपूर्ण क्षमता अनलॉक करा",
+  "profitability-title": "नफा वाढवा",
+  "profitability-text": "उत्पादन सुधारण्यासाठी आणि महसूल वाढवण्यासाठी डेटा-संचालित निर्णय घ्या.",
+  "resource-title": "संसाधन वाटप अनुकूल करा",
+  "resource-text": "उत्पादन अंदाजांच्या आधारे पाणी, खते आणि मजूर यांसारख्या संसाधनांचे कार्यक्षमपणे व्यवस्थापन करा.",
+  "management-title": "पीक व्यवस्थापन वाढवा",
+  "management-text": "पीक कामगिरीबद्दल अंतर्दृष्टी मिळवा आणि चांगल्या परिणामांसाठी शेती प्रथा अनुकूल करा.",
+  "contact-subtitle": "आमच्याशी संपर्क साधा",
+  "contact-title": "संपर्क करा",
+  "contact-text": "हा प्रकल्प नेताजी सुभाष अभियांत्रिकी महाविद्यालयातील विद्यार्थ्यांनी आमच्या हॅकाथॉन प्रवासाचा भाग म्हणून डिझाइन आणि विकसित केला आहे: आकाश राज, वसुधा बिस्वास, अंकित खन्ना, शिवम तिवारी, हर्ष आनंद, सत्यम शुभम.",
+  "contact-button": "आमच्याशी संपर्क साधा",
+  "copyright": "© 2025 AgriVision. सर्व हक्क राखीव.",
+  "footer-text": "शेतकऱ्यांसाठी कृतज्ञतेने बनवले ❤"
+},
+
+// Gujarati (gu) - ગુજરાતી
+gu: {
+  "nav-home": "હોમ",
+  "nav-about": "અમારા વિશે",
+  "nav-features": "સુવિધાઓ",
+  "nav-benefits": "ફાયદા",
+  "nav-contact": "સંપર્ક કરો",
+  "nav-get-started": "શરૂ કરો",
+  "main-heading": "ચોકસાઇ સાથે તમારા પાકની ઉપજનું અનુમાન કરો",
+  "main-subtitle": "પાકની ઉપજનું ચોક્કસ અનુમાન કરવા માટે અદ્યતન મશીન લર્નિંગ મોડલ્સનો લાભ લો, તમારી કૃષિ આયોજના અને સંસાધન વ્યવસ્થાપનને અનુકૂળ બનાવો.",
+  "smarter": "સ્માર્ટ",
+  "insights": "આંતરદૃષ્ટિ.",
+  "higher": "ઉચ્ચ",
+  "yields": "ઉપજ.",
+  "better": "વધુ સારું",
+  "lives": "જીવન.",
+  "start-predicting": "હવે અનુમાન શરૂ કરો",
+  "about-title": "🌱 અમારા વિશે",
+  "about-text-1": "AgriVision ખેડૂતોને ચોક્કસ અને વિશ્વસનીય પાક ઉપજ અનુમાન પ્રદાન કરવા માટે કટિંગ-એજ મશીન લર્નિંગની શક્તિનો ઉપયોગ કરે છે. અમારું અત્યાધુનિક મોડલ ક્રિયાશીલ આંતરદૃષ્ટિ પ્રદાન કરવા માટે ડેટા પોઇન્ટ્સની વિસ્તૃત શ્રેણીનું વિશ્લેષણ કરે છે, જે તમને વધુ નફાકારક અને ટકાઉ ફાર્મ માટે સ્માર્ટ નિર્ણયો લેવામાં મદદ કરે છે.",
+  "about-text-2": "આ પ્રોજેક્ટમાં, અમે AI-સંચાલિત પાક ઉપજ અનુમાન અને ઓપ્ટિમાઇઝેશન પ્લેટફોર્મ વિકસાવ્યું છે જે ઉત્પાદકતાનું અનુમાન લગાવવા માટે હવામાન ડેટા, માટી મેટ્રિક્સ અને ઐતિહાસિક પાક ઉપજનો લાભ લે છે. અનુમાનો સાથે, અમારી સિસ્ટમ સિંચાઈ, ખાતર અને જીવાત વ્યવસ્થાપન માટે ક્રિયાશીલ ભલામણો પ્રદાન કરે છે—ખેડૂતોને ઉપજ વધારવા અને જોખમો ઘટાડવામાં મદદ કરે છે.",
+  "how-it-works": "તે કેવી રીતે કામ કરે છે",
+  "how-it-works-text": "અમારું મોડલ ઐતિહાસિક હવામાન પેટર્ન, માટીના આરોગ્ય ડેટા, સેટેલાઇટ ઇમેજરી અને તમારી ચોક્કસ પાક માહિતીને એકીકૃત કરે છે. અદ્યતન અલ્ગોરિધમ્સ પછી તમારા ખેતરો માટે અત્યંત ચોક્કસ ઉપજ અનુમાન બનાવવા માટે આ ડેટાની પ્રક્રિયા કરે છે.",
+  "key-features": "મુખ્ય સુવિધાઓ",
+  "feature-1": "ચોક્કસ, ખેત-સ્તરના ઉપજ અનુમાન.",
+  "feature-2": "વિવિધ ડેટા સ્રોતોનું એકીકરણ.",
+  "feature-3": "સરળ વિશ્લેષણ માટે વપરાશકર્તા-મૈત્રીપૂર્ણ ડેશબોર્ડ.",
+  "feature-4": "પ્રથાઓને અનુકૂળ બનાવવા માટે ક્રિયાશીલ આંતરદૃષ્ટિ.",
+  "benefits-title": "ફાયદા",
+  "benefit-1": "ડેટા-સંચાલિત નિર્ણયો સાથે નફાકારકતા વધારો.",
+  "benefit-2": "કાર્યક્ષમતા માટે સંસાધન ફાળવણીને અનુકૂળ બનાવો.",
+  "benefit-3": "ઉપજ પરિણામોની અપેક્ષા કરીને જોખમો ઘટાડો.",
+  "benefit-4": "એકંદર ખેત વ્યવસ્થાપન અને સ્થિરતા વધારો.",
+  "features-subtitle": "મુખ્ય સુવિધાઓ",
+  "features-title": "આધુનિક કૃષિ માટે શક્તિશાળી સાધનો",
+  "analytics-title": "અદ્યતન વિશ્લેષણ",
+  "analytics-text": "ચોક્કસ ઉપજ અનુમાન માટે કટિંગ-એજ મશીન લર્નિંગ તકનીકોનો ઉપયોગ કરે છે.",
+  "data-title": "વ્યાપક ડેટા એકીકરણ",
+  "data-text": "પાક ઉપજ પરિબળોના સમગ્ર દૃશ્ય માટે વિવિધ ડેટા સ્રોતોને સંયોજિત કરે છે.",
+  "interface-title": "વપરાશકર્તા-મૈત્રીપૂર્ણ ઇન્ટરફેસ",
+  "interface-text": "સરળ નેવિગેશન અને કાર્યક્ષમ ડેટા અર્થઘટન માટે સાહજિક ડિઝાઇન.",
+  "benefits-subtitle": "ફાયદા",
+  "benefits-title-main": "તમારા ફાર્મની સંપૂર્ણ ક્ષમતા અનલૉક કરો",
+  "profitability-title": "નફાકારકતા વધારો",
+  "profitability-text": "ઉપજ સુધારવા અને આવક વધારવા માટે ડેટા-સંચાલિત નિર્ણયો લો.",
+  "resource-title": "સંસાધન ફાળવણીને અનુકૂળ બનાવો",
+  "resource-text": "ઉપજ અનુમાનોના આધારે પાણી, ખાતર અને મજૂરી જેવા સંસાધનોનું કાર્યક્ષમતાથી વ્યવસ્થાપન કરો.",
+  "management-title": "પાક વ્યવસ્થાપન વધારો",
+  "management-text": "પાક કાર્યક્ષમતા વિશે આંતરદૃષ્ટિ મેળવો અને વધુ સારા પરિણામો માટે ખેતી પ્રથાઓને અનુકૂળ બનાવો.",
+  "contact-subtitle": "અમારો સંપર્ક કરો",
+  "contact-title": "સંપર્ક કરો",
+  "contact-text": "આ પ્રોજેક્ટ નેતાજી સુભાષ એન્જિનિયરિંગ કોલેજના વિદ્યાર્થીઓ દ્વારા અમારી હેકાથોન યાત્રાના ભાગ રૂપે ડિઝાઇન અને વિકસિત કરવામાં આવ્યો છે: આકાશ રાજ, વસુધા બિસ્વાસ, અંકિત ખન્ના, શિવમ તિવારી, હર્ષ આનંદ, સત્યમ શુભમ.",
+  "contact-button": "અમારો સંપર્ક કરો",
+  "copyright": "© 2025 AgriVision. બધા હક્કો અનામત છે.",
+  "footer-text": "ખેડૂતો માટે કૃતજ્ઞતા સાથે બનાવેલ ❤"
+},
+
+// Malayalam (ml) - മലയാളം
+ml: {
+  "nav-home": "ഹോം",
+  "nav-about": "ഞങ്ങളെ കുറിച്ച്",
+  "nav-features": "സവിശേഷതകൾ",
+  "nav-benefits": "ഗുണങ്ങൾ",
+  "nav-contact": "ബന്ധപ്പെടുക",
+  "nav-get-started": "ആരംഭിക്കുക",
+  "main-heading": "കൃത്യതയോടെ നിങ്ങളുടെ വിള വിളവ് പ്രവചിക്കുക",
+  "main-subtitle": "വിള വിളവ് കൃത്യമായി പ്രവചിക്കാൻ വികസിത മെഷീൻ ലേണിംഗ് മോഡലുകൾ പ്രയോജനപ്പെടുത്തുക, നിങ്ങളുടെ കാർഷിക ആസൂത്രണവും വിഭവ മാനേജ്മെന്റും ഒപ്റ്റിമൈസ് ചെയ്യുക.",
+  "smarter": "മികച്ച",
+  "insights": "ഉൾക്കാഴ്ചകൾ.",
+  "higher": "ഉയർന്ന",
+  "yields": "വിളവ്.",
+  "better": "മെച്ചപ്പെട്ട",
+  "lives": "ജീവിതം.",
+  "start-predicting": "ഇപ്പോൾ പ്രവചനം ആരംഭിക്കുക",
+  "about-title": "🌱 ഞങ്ങളെ കുറിച്ച്",
+  "about-text-1": "AgriVision കർഷകർക്ക് കൃത്യവും വിശ്വസനീയവുമായ വിള വിളവ് പ്രവചനങ്ങൾ നൽകുന്നതിനായി അത്യാധുനിക മെഷീൻ ലേണിംഗിന്റെ ശക്തി ഉപയോഗിക്കുന്നു. ഞങ്ങളുടെ അത്യാധുനിക മോഡൽ പ്രവർത്തനക്ഷമമായ ഉൾക്കാഴ്ചകൾ നൽകുന്നതിനായി ഡാറ്റാ പോയിന്റുകളുടെ വിപുലമായ ശ്രേണി വിശകലനം ചെയ്യുന്നു, കൂടുതൽ ലാഭകരവും സുസ്ഥിരവുമായ കൃഷിയിടത്തിനായി മികച്ച തീരുമാനങ്ങൾ എടുക്കാൻ നിങ്ങളെ സഹായിക്കുന്നു.",
+  "about-text-2": "ഈ പ്രോജക്റ്റിൽ, ഉൽപ്പാദനക്ഷമത പ്രവചിക്കുന്നതിനായി കാലാവസ്ഥാ ഡാറ്റ, മണ്ണിന്റെ മെട്രിക്സ്, ചരിത്രപരമായ വിള വിളവ് എന്നിവ പ്രയോജനപ്പെടുത്തുന്ന AI-പവേർഡ് വിള വിളവ് പ്രവചന & ഒപ്റ്റിമൈസേഷൻ പ്ലാറ്റ്ഫോം ഞങ്ങൾ വികസിപ്പിച്ചിട്ടുണ്ട്. പ്രവചനങ്ങൾക്കൊപ്പം, ഞങ്ങളുടെ സിസ്റ്റം ജലസേചനം, വളപ്രയോഗം, കീടനാശിനി മാനേജ്മെന്റ് എന്നിവയ്ക്കായി പ്രവർത്തനക്ഷമമായ ശുപാർശകൾ നൽകുന്നു—കർഷകരെ വിളവ് വർധിപ്പിക്കാനും അപകടസാധ്യതകൾ കുറയ്ക്കാനും സഹായിക്കുന്നു.",
+  "how-it-works": "ഇത് എങ്ങനെ പ്രവർത്തിക്കുന്നു",
+  "how-it-works-text": "ഞങ്ങളുടെ മോഡൽ ചരിത്രപരമായ കാലാവസ്ഥാ പാറ്റേണുകൾ, മണ്ണിന്റെ ആരോഗ്യ ഡാറ്റ, ഉപഗ്രഹ ചിത്രീകരണം, നിങ്ങളുടെ നിർദ്ദിഷ്ട വിള വിവരങ്ങൾ എന്നിവ സംയോജിപ്പിക്കുന്നു. വികസിത അൽഗോരിതങ്ങൾ നിങ്ങളുടെ വയലുകൾക്കായി അതിസൂക്ഷ്മമായ വിളവ് പ്രവചനങ്ങൾ സൃഷ്ടിക്കുന്നതിനായി ഈ ഡാറ്റ പ്രോസസ്സ് ചെയ്യുന്നു.",
+  "key-features": "പ്രധാന സവിശേഷതകൾ",
+  "feature-1": "കൃത്യമായ, ഫീൽഡ്-ലെവൽ വിളവ് പ്രവചനങ്ങൾ.",
+  "feature-2": "വൈവിധ്യമാർന്ന ഡാറ്റ സ്രോതസുകളുടെ സംയോജനം.",
+  "feature-3": "എളുപ്പത്തിലുള്ള വിശകലനത്തിനായി ഉപയോക്താവ്-സൗഹൃദ ഡാഷ്ബോർഡ്.",
+  "feature-4": "പ്രായോഗിക രീതികൾ ഒപ്റ്റിമൈസ് ചെയ്യുന്നതിനുള്ള പ്രവർത്തനക്ഷമമായ ഉൾക്കാഴ്ചകൾ.",
+  "benefits-title": "ഗുണങ്ങൾ",
+  "benefit-1": "ഡാറ്റ-അടിസ്ഥാന തീരുമാനങ്ങൾ ഉപയോഗിച്ച് ലാഭക്ഷമത പരമാവധിയാക്കുക.",
+  "benefit-2": "കാര്യക്ഷമതയ്ക്കായി വിഭവ വിഹിതം ഒപ്റ്റിമൈസ് ചെയ്യുക.",
+  "benefit-3": "വിളവ് ഫലങ്ങൾ പ്രതീക്ഷിച്ച് അപകടസാധ്യതകൾ ലഘൂകരിക്കുക.",
+  "benefit-4": "മൊത്തത്തിലുള്ള കൃഷി മാനേജ്മെന്റും സുസ്ഥിരതയും മെച്ചപ്പെടുത്തുക.",
+  "features-subtitle": "പ്രധാന സവിശേഷതകൾ",
+  "features-title": "ആധുനിക കൃഷിയ്ക്കുള്ള ശക്തമായ ഉപകരണങ്ങൾ",
+  "analytics-title": "വികസിത അനാലിറ്റിക്സ്",
+  "analytics-text": "കൃത്യമായ വിളവ് പ്രവചനങ്ങൾക്കായി അത്യാധുനിക മെഷീൻ ലേണിംഗ് സാങ്കേതിക വിദ്യകൾ ഉപയോഗിക്കുന്നു.",
+  "data-title": "സമ്പൂർണ്ണ ഡാറ്റ സംയോജനം",
+  "data-text": "വിള വിളവ് ഘടകങ്ങളുടെ സമഗ്രമായ കാഴ്ചയ്ക്കായി വൈവിധ്യമാർന്ന ഡാറ്റ സ്രോതസുകൾ സംയോജിപ്പിക്കുന്നു.",
+  "interface-title": "ഉപയോക്താവ്-സൗഹൃദ ഇന്റർഫേസ്",
+  "interface-text": "എളുപ്പത്തിലുള്ള നാവിഗേഷനും കാര്യക്ഷമമായ ഡാറ്റ വ്യാഖ്യാനത്തിനുമുള്ള അവബോധപരമായ ഡിസൈൻ.",
+  "benefits-subtitle": "ഗുണങ്ങൾ",
+  "benefits-title-main": "നിങ്ങളുടെ കൃഷിയിടത്തിന്റെ പൂർണ്ണ സാധ്യതകൾ അൺലോക്ക് ചെയ്യുക",
+  "profitability-title": "ലാഭക്ഷമത പരമാവധിയാക്കുക",
+  "profitability-text": "വിളവ് മെച്ചപ്പെടുത്താനും വരുമാനം വർധിപ്പിക്കാനും ഡാറ്റ-അടിസ്ഥാന തീരുമാനങ്ങൾ എടുക്കുക.",
+  "resource-title": "വിഭവ വിഹിതം ഒപ്റ്റിമൈസ് ചെയ്യുക",
+  "resource-text": "വിളവ് പ്രവചനങ്ങളുടെ അടിസ്ഥാനത്തിൽ വെള്ളം, വളങ്ങൾ, തൊഴിലാളികൾ തുടങ്ങിയ വിഭവങ്ങൾ കാര്യക്ഷമമായി കൈകാര്യം ചെയ്യുക.",
+  "management-title": "വിള മാനേജ്മെന്റ് മെച്ചപ്പെടുത്തുക",
+  "management-text": "വിള പ്രകടനത്തെക്കുറിച്ചുള്ള ഉൾക്കാഴ്ചകൾ നേടുകയും മെച്ചപ്പെട്ട ഫലങ്ങൾക്കായി കാർഷിക രീതികൾ സ്വീകരിക്കുകയും ചെയ്യുക.",
+  "contact-subtitle": "ഞങ്ങളെ ബന്ധപ്പെടുക",
+  "contact-title": "ബന്ധപ്പെടുക",
+  "contact-text": "ഈ പ്രോജക്റ്റ് നേതാജി സുഭാഷ് എഞ്ചിനീയറിംഗ് കോളേജിലെ വിദ്യാർത്ഥികൾ ഞങ്ങളുടെ ഹാക്കത്തോൺ യാത്രയുടെ ഭാഗമായി രൂപകല്പന ചെയ്യുകയും വികസിപ്പിക്കുകയും ചെയ്തിട്ടുണ്ട്: ആകാശ് രാജ്, വസുധാ ബിസ്വാസ്, അങ്കിത് ഖന്ന, ശിവം തിവാരി, ഹർഷ് ആനന്ദ്, സത്യം ശുഭം.",
+  "contact-button": "ഞങ്ങളെ ബന്ധപ്പെടുക",
+  "copyright": "© 2025 AgriVision. എല്ലാ അവകാശങ്ങളും സംരക്ഷിതം.",
+  "footer-text": "കൃഷിക്കാർക്കായി കൃതജ്ഞതയോടെ നിർമ്മിച്ചത് ❤"
+}
+  };
+
+  // Function to change language
+  function changeLanguage(language) {
+    // Update the language switcher value
+    languageSwitcher.value = language;
+    
+    // Update the lang attribute of the HTML element
+    document.documentElement.lang = language;
+    
+    // Get all elements with data-i18n attribute
+    const elements = document.querySelectorAll('[data-i18n]');
+    
+    // Update the content of each element
+    elements.forEach(element => {
+      const key = element.getAttribute('data-i18n');
+      if (translations[language] && translations[language][key]) {
+        element.textContent = translations[language][key];
+      }
+    });
+    
+    // Save the selected language to localStorage
+    localStorage.setItem('selectedLanguage', language);
+  }
+
+  // Event listener for language switcher
+  languageSwitcher.addEventListener('change', (event) => {
+    changeLanguage(event.target.value);
+  });
+
+  // Check for saved language preference or default to English
+  const savedLanguage = localStorage.getItem('selectedLanguage') || 'en';
+  changeLanguage(savedLanguage);
+</script>
+
+</body>
+</html>

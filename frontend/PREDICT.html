@@ -1,0 +1,1940 @@
+<!DOCTYPE html>
+<html class="dark" lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+  <title>Crop Yield Prediction (Auto-detect) + Area Converter</title>
+  <link href="/favicon.ico" rel="icon" type="image/x-icon"/>
+  <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+  <link href="https://fonts.googleapis.com" rel="preconnect"/>
+  <link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+  <link rel="shortcut icon" href="icon.jpeg" type="image/x-icon">
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+  <style>
+    :root {
+      --primary-color: #38e07b;
+      --secondary-color: #28a058;
+      --background-color: #121212;
+      --text-primary: #e0e0e0;
+      --text-secondary: #a0a0a0;
+      --accent-color: #5ce690;
+      --card-background: rgba(255, 255, 255, 0.06);
+      --border-radius-xl: 0.75rem;
+      --border-radius-full: 9999px;
+    }
+    body { font-family: "Poppins", sans-serif; background-color: var(--background-color); color: var(--text-primary); }
+
+    .area-converter-row { display: flex; gap: 0.75rem; align-items: center; flex-wrap: wrap; }
+    .area-converter-row > * { min-width: 0; }
+    .area-input, .area-unit, .sqm-input { flex: 1 1 140px; }
+    .convert-btn { flex: 0 0 auto; }
+
+    .card-inner { overflow: visible; }
+
+    @media (max-width: 640px) {
+      .page-title { font-size: 1.6rem; }
+      .area-input, .area-unit, .sqm-input { flex-basis: 100%; }
+      .convert-btn { width: 100%; }
+    }
+
+    #results-section {
+      transform: translateY(20px);
+      opacity: 0;
+      transition: transform 450ms ease, opacity 450ms ease;
+    }
+
+    #results-section.show {
+      transform: translateY(0);
+      opacity: 1;
+      display: block !important;
+    }
+
+    #results-section:not(.hidden) {
+      display: block !important;
+    }
+
+    .result-highlight {
+      animation: resultPulse 1.2s ease;
+      box-shadow: 0 12px 40px rgba(56,224,123,0.12), 0 4px 12px rgba(0,0,0,0.4);
+      border: 1px solid rgba(92,230,144,0.06);
+    }
+
+    @keyframes resultPulse {
+      0% { transform: translateY(8px) scale(0.995); }
+      50% { transform: translateY(0) scale(1.01); }
+      100% { transform: translateY(0) scale(1); }
+    }
+
+    .loading-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.55);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 60;
+    }
+
+    .loading-overlay.show {
+      display: flex !important;
+    }
+
+    .loading-card {
+      background: rgba(0,0,0,0.7);
+      padding: 18px 22px;
+      border-radius: 12px;
+      box-shadow: 0 8px 30px rgba(0,0,0,0.6);
+      display: flex;
+      gap: 14px;
+      align-items: center;
+      color: var(--text-primary);
+    }
+
+    .loading-spinner {
+      width: 60px;
+      height: 60px;
+      border-radius: 9999px;
+      border: 5px solid rgba(255,255,255,0.12);
+      border-top-color: var(--primary-color);
+      animation: spin 1s linear infinite;
+      position: relative;
+    }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .tab-button {
+      transition: all 0.3s ease;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .tab-button.active {
+      background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+      color: black;
+    }
+
+    .tab-button:not(.active) {
+      background: rgba(255, 255, 255, 0.1);
+      color: var(--text-secondary);
+    }
+
+    .tab-button:not(.active):hover {
+      background: rgba(255, 255, 255, 0.15);
+      color: var(--text-primary);
+    }
+  </style>
+</head>
+<body class="bg-[var(--background-color)] text-[var(--text-primary)]">
+<div class="relative min-h-screen w-full bg-cover bg-center" style="background-image: linear-gradient(to bottom, rgba(18, 18, 18, 0.8), rgba(18, 18, 18, 1)), url('https://images.unsplash.com/photo-1501004318641-b39e6451bec6?auto=format&fit=crop&w=1400&q=80')">
+
+<header class="absolute top-0 left-0 w-full p-4 flex justify-between items-center z-10">
+  <a class="inline-flex items-center bg-black/30 text-white border border-white/20 rounded-[var(--border-radius-full)] px-4 py-2 text-sm font-medium hover:bg-white/10 transition-colors" href="code.html" id="home-btn">
+    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M15 19l-7-7 7-7" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
+    Return to Homepage
+  </a>
+  <div class="relative">
+    <select aria-label="Language switcher" class="bg-black/30 text-white border border-white/20 rounded-[var(--border-radius-full)] px-4 py-2 focus:outline-none focus:ring-2 focus:ring-[var(--primary-color)] transition-all duration-300 appearance-none bg-no-repeat bg-right pr-8" id="language-switcher">
+      <option value="en">English</option>
+      <option value="hi">हिन्दी</option>
+      <option value="bn">বাংলা</option>
+      <option value="pa">ਪੰਜਾਬੀ</option>
+      <option value="or">ଓଡ଼ିଆ</option>
+      <option value="ta">தமிழ்</option>
+      <option value="mr">मराठी</option>
+     <option value="gu">ગુજરાતી</option>
+     <option value="ml">മലയാളം</option>
+    </select>
+  </div>
+</header>
+
+<main class="flex flex-col items-center justify-center min-h-screen p-4 pt-20">
+  <div class="flex justify-center mb-6">
+    <img src="icon.jpeg" alt="App Logo" class="h-28 w-auto rounded-full">
+  </div>
+
+  <div class="w-full max-w-2xl text-center mb-12">
+    <h1 id="page-title" class="page-title text-4xl md:text-5xl font-bold text-white mb-4">Crop Yield Prediction</h1>
+    <p id="page-desc" class="text-lg md:text-xl text-[var(--text-secondary)]">Enter your farm's data to get an accurate yield prediction and tailored recommendations.</p>
+  </div>
+
+  <div class="w-full max-w-5xl px-2">
+    <div class="bg-[var(--card-background)] backdrop-blur-lg p-6 sm:p-8 rounded-2xl shadow-2xl border border-white/10 card-inner">
+      <form id="prediction-form" class="grid grid-cols-1 md:grid-cols-2 gap-6" autocomplete="off">
+        <!-- Area converter block -->
+        <div class="form-group md:col-span-2">
+  <div class="bg-black/20 p-3 rounded-[var(--border-radius-xl)] border border-white/10">
+    <label id="lbl-area-converter" class="block text-sm font-medium text-[var(--text-secondary)] mb-2">Land area converter (to hectares)</label>
+    <div class="area-converter-row">
+      <input id="area-input-value" type="number" step="any" min="0" placeholder="Enter value" class="area-input bg-black/30 text-white border border-white/10 rounded-[var(--border-radius-xl)] px-3 py-2" />
+      <select id="area-input-unit" class="area-unit bg-black/30 text-white border border-white/10 rounded-[var(--border-radius-xl)] px-3 py-2">
+        <option value="hectare">Hectare (ha)</option>
+        <option value="acre">Acre</option>
+        <option value="sq_meter">Square metre (m²)</option>
+        <option value="sq_ft">Square feet (ft²)</option>
+        <option value="bigha">Bigha</option>
+        <option value="katha">Katha</option>
+        <option value="dismil">Dismil / Decimal</option>
+      </select>
+      <input id="sqm-per-unit" type="number" step="any" min="0" placeholder="sqm per unit (auto for fixed units)" class="sqm-input bg-black/20 text-gray-300 border border-white/10 rounded-[var(--border-radius-xl)] px-3 py-2" />
+      <button id="convert-btn" type="button" class="convert-btn inline-flex items-center px-3 py-2 rounded-[var(--border-radius-xl)] bg-[var(--primary-color)] text-black font-medium">Convert</button>
+    </div>
+    <p id="area-converter-note" class="text-xs text-[var(--text-secondary)] mt-2">Note: bigha/katha/dismil vary by state — the app will auto-fill common values for your detected state; you can override if needed.</p>
+    <div class="mt-3">
+      <span id="result-label" class="text-sm text-[var(--text-secondary)]">Result:</span>
+      <div id="converted-result" class="inline-block ml-2 text-white font-semibold">—</div>
+    </div>
+  </div>
+
+        </div>
+
+        <div class="form-group md:col-span-2">
+          <div class="flex gap-2 mb-3">
+            <button id="use-location-btn" type="button" class="inline-flex items-center px-3 py-2 rounded-[var(--border-radius-xl)] bg-black/30 border border-white/10 text-sm">Use my location</button>
+            <input id="detected-place" type="text" placeholder="Detected location will appear here" readonly class="flex-1 bg-black/20 text-white border border-white/10 rounded-[var(--border-radius-xl)] px-3 py-2" />
+          </div>
+        </div>
+
+        <div>
+          <label id="lbl-location" class="block text-sm font-medium text-[var(--text-secondary)] mb-2" for="location">Location (State)</label>
+          <select id="location" class="w-full bg-black/30 text-white border border-white/20 rounded-[var(--border-radius-xl)] px-4 py-3">
+            <option value="">Select State</option>
+            <option>Andhra Pradesh</option>
+            <option>Arunachal Pradesh</option>
+            <option>Assam</option>
+            <option>Bihar</option>
+            <option>Chhattisgarh</option>
+            <option>Goa</option>
+            <option>Gujarat</option>
+            <option>Haryana</option>
+            <option>Himachal Pradesh</option>
+            <option>Jharkhand</option>
+            <option>Karnataka</option>
+            <option>Kerala</option>
+            <option>Madhya Pradesh</option>
+            <option>Maharashtra</option>
+            <option>Manipur</option>
+            <option>Meghalaya</option>
+            <option>Mizoram</option>
+            <option>Nagaland</option>
+            <option>Odisha</option>
+            <option>Punjab</option>
+            <option>Rajasthan</option>
+            <option>Sikkim</option>
+            <option>Tamil Nadu</option>
+            <option>Telangana</option>
+            <option>Tripura</option>
+            <option>Uttar Pradesh</option>
+            <option>Uttarakhand</option>
+            <option>West Bengal</option>
+            <option>Delhi</option>
+            <option>Jammu &amp; Kashmir</option>
+            <option>Ladakh</option>
+            <option>Chandigarh</option>
+            <option>Puducherry</option>
+            <option>Andaman &amp; Nicobar Islands</option>
+            <option>Lakshadweep</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label id="lbl-crop" class="block text-sm font-medium text-[var(--text-secondary)] mb-2" for="crop">Crop</label>
+          <select id="crop" class="w-full bg-black/30 text-white border border-white/20 rounded-[var(--border-radius-xl)] px-4 py-3">
+            <option value="">Select Crop</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label id="lbl-soil" class="block text-sm font-medium text-[var(--text-secondary)] mb-2" for="soil-type">Soil Type</label>
+          <input id="soil-type" class="w-full bg-black/50 text-gray-400 border border-white/20 rounded-[var(--border-radius-xl)] px-4 py-3" disabled readonly placeholder="Auto-filled from state preset" type="text"/>
+        </div>
+
+        <div class="form-group">
+          <label id="lbl-temp" class="block text-sm font-medium text-[var(--text-secondary)] mb-2" for="temp">Avg Temp (°C)</label>
+          <input id="temp" class="w-full bg-black/50 text-gray-400 border border-white/20 rounded-[var(--border-radius-xl)] px-4 py-3" disabled readonly placeholder="Auto-filled from weather API" type="text"/>
+        </div>
+
+        <div class="form-group">
+          <label id="lbl-rain" class="block text-sm font-medium text-[var(--text-secondary)] mb-2" for="rainfall">Rainfall (mm)</label>
+          <input id="rainfall" class="w-full bg-black/50 text-gray-400 border border-white/20 rounded-[var(--border-radius-xl)] px-4 py-3" disabled readonly placeholder="Auto-filled from weather API" type="text"/>
+        </div>
+
+        <div class="form-group">
+          <label id="lbl-humidity" class="block text-sm font-medium text-[var(--text-secondary)] mb-2" for="humidity">Humidity (%)</label>
+          <input id="humidity" class="w-full bg-black/50 text-gray-400 border border-white/20 rounded-[var(--border-radius-xl)] px-4 py-3" disabled readonly placeholder="Auto-filled from weather API" type="text"/>
+        </div>
+
+        <div class="form-group">
+          <label id="lbl-area" class="block text-sm font-medium text-[var(--text-secondary)] mb-2" for="area">Area (hectares)</label>
+          <input id="area" class="w-full bg-black/30 text-white border border-white/20 rounded-[var(--border-radius-xl)] px-4 py-3" placeholder="e.g., 150" type="text"/>
+        </div>
+
+        <div class="form-group">
+          <label id="lbl-pesticides" class="block text-sm font-medium text-[var(--text-secondary)] mb-2" for="pesticides">Pesticides (g/ha)</label>
+          <input id="pesticides" class="w-full bg-black/30 text-white border border-white/20 rounded-[var(--border-radius-xl)] px-4 py-3" placeholder="e.g., 1.2" type="number" required step="0.1"/> 
+        </div>
+
+        <div class="form-group">
+          <label id="lbl-season" class="block text-sm font-medium text-[var(--text-secondary)] mb-2" for="season">Season</label>
+          <select id="season" class="w-full bg-black/30 text-white border border-white/20 rounded-[var(--border-radius-xl)] px-4 py-3">
+            <option value="">Select season</option>
+            <option>Rabi</option>
+            <option>Kharif</option>
+            <option>Zaid</option>
+            <option>Winter</option>
+            <option>Summer</option>
+            <option>Whole Year</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label id="lbl-fertilizer" class="block text-sm font-medium text-[var(--text-secondary)] mb-2" for="fertilizer">Fertilizer (g/ha)</label>
+          <input id="fertilizer" class="w-full bg-black/30 text-white border border-white/20 rounded-[var(--border-radius-xl)] px-4 py-3" placeholder="e.g., 200" type="number" required step="0.1"/>
+        </div>
+
+        <div class="md:col-span-2 mt-4">
+          <button type="submit" class="w-full bg-gradient-to-r from-[var(--primary-color)] to-[var(--secondary-color)] text-black font-bold text-lg py-4 rounded-[var(--border-radius-full)] hover:shadow-lg hover:shadow-[var(--primary-color)]/30 transition-all duration-300 transform hover:scale-105">
+            <span id="button-text">Predict Yield & Get Crop Recommendations</span>
+            <div class="hidden h-5 w-5 animate-spin rounded-full border-4 border-solid border-current border-r-transparent ml-3 inline-block align-middle" id="loader"></div>
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Combined Results Section -->
+  <div id="results-section" class="w-full max-w-5xl mt-12 hidden" style="transform: translateY(20px); opacity: 0;">
+    <!-- Tab Navigation -->
+    <div class="flex justify-center mb-6">
+      <div class="bg-black/30 p-1 rounded-full border border-white/10">
+        <button id="yield-tab" class="tab-button active px-6 py-2 rounded-full text-sm font-medium transition-all">
+          Yield Prediction
+        </button>
+        <button id="recommendations-tab" class="tab-button px-6 py-2 rounded-full text-sm font-medium transition-all">
+          Crop Recommendations
+        </button>
+      </div>
+    </div>
+
+    <!-- Yield Prediction Results -->
+    <div id="yield-results" class="bg-[var(--card-background)] backdrop-blur-lg p-6 sm:p-8 rounded-2xl shadow-2xl border border-white/10">
+      <h2 id="result-title" class="text-2xl font-bold text-white mb-2 text-center">Prediction Result</h2>
+      <div class="text-center mb-6">
+        <p id="estimated-yield" class="text-lg text-[var(--text-secondary)]">Estimated Yield</p>
+        <p id="yield-result" class="text-4xl font-bold text-[var(--primary-color)]">3,100,000 g/ha</p>
+      </div>
+      <div>
+        <h3 id="recommendations-title" class="text-md font-semibold text-[var(--text-secondary)] mb-2">Recommendations</h3>
+        <ul id="recommendations-list" class="list-disc list-inside text-[var(--text-secondary)]"></ul>
+      </div>
+    </div>
+
+    <!-- Crop Recommendations Results -->
+    <div id="crop-recommendations" class="bg-[var(--card-background)] backdrop-blur-lg p-6 sm:p-8 rounded-2xl shadow-2xl border border-white/10 hidden">
+      <h2 id="crop-result-title" class="text-2xl font-bold text-white mb-6 text-center">Crop Recommendations</h2>
+      
+      <!-- Best Crop Recommendation -->
+      <div id="best-crop-section" class="mb-8 p-4 bg-gradient-to-r from-green-900/30 to-green-800/30 rounded-xl border border-green-500/20">
+        <h3 class="text-xl font-bold text-green-400 mb-3">🏆 Best Recommended Crop</h3>
+        <div id="best-crop-details" class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+          <!-- Best crop details will be populated here -->
+        </div>
+      </div>
+      
+      <!-- All Crop Recommendations -->
+      <div id="all-crops-section">
+        <h3 class="text-lg font-semibold text-[var(--text-secondary)] mb-4">All Crop Comparisons</h3>
+        <div id="all-crops-list" class="space-y-4">
+          <!-- All crop recommendations will be populated here -->
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Loading overlay -->
+  <div id="loading-overlay" class="loading-overlay" aria-hidden="true">
+    <div class="loading-card">
+      <div class="loading-spinner" aria-hidden="true"></div>
+      <div>
+        <div class="text-sm font-medium">Analyzing data — please wait…</div>
+        <div class="text-xs text-[var(--text-secondary)]">Getting yield prediction and crop recommendations...</div>
+      </div>
+    </div>
+  </div>
+</main>
+</div>
+
+<script>
+// Replace the existing translations object with this comprehensive one
+const translations = {
+  en: {
+    // Page headers
+    title: "Crop Yield Prediction",
+    description: "Enter your farm's data to get an accurate yield prediction and tailored recommendations.",
+    returnHome: "Return to Homepage",
+    
+    // Form labels
+    areaConverter: "Land area converter (to hectares)",
+    enterValue: "Enter value",
+    sqmPerUnit: "sqm per unit (auto for fixed units)",
+    convert: "Convert",
+    areaConverterNote: "Note: bigha/katha/dismil vary by state — the app will auto-fill common values for your detected state; you can override if needed.",
+    result: "Result",
+    useLocation: "Use my location",
+    detectedLocation: "Detected location will appear here",
+    location: "Location (State)",
+    selectState: "Select State",
+    crop: "Crop",
+    selectCrop: "Select Crop",
+    soilType: "Soil Type",
+    soilAutoFill: "Auto-filled from API",
+    avgTemp: "Avg Temp (°C)",
+    tempAutoFill: "Auto-filled from weather API",
+    rainfall: "Rainfall (mm)",
+    rainfallAutoFill: "Auto-filled from weather API",
+    humidity: "Humidity (%)",
+    humidityAutoFill: "Auto-filled from weather API",
+    area: "Area (hectares)",
+    pesticides: "Pesticides (g/ha)",
+    season: "Season",
+    selectSeason: "Select season",
+    fertilizer: "Fertilizer (g/ha)",
+    
+    // Button text
+    predictButton: "Predict Yield & Get Crop Recommendations",
+    
+    // Results
+    yieldPrediction: "Yield Prediction",
+    cropRecommendations: "Crop Recommendations",
+    predictionResult: "Prediction Result",
+    estimatedYield: "Estimated Yield",
+    recommendations: "Recommendations",
+    cropResultTitle: "Crop Recommendations",
+    bestRecommended: "🏆 Best Recommended Crop",
+    allComparisons: "All Crop Comparisons",
+    expectedYield: "Expected Yield:",
+    fertilizerLabel: "Fertilizer:",
+    pesticideLabel: "Pesticide:",
+    
+    // Units
+    hectareUnit: "Hectare (ha)",
+    acreUnit: "Acre",
+    sqMeterUnit: "Square metre (m²)",
+    sqFtUnit: "Square feet (ft²)",
+    bighaUnit: "Bigha",
+    kathaUnit: "Katha",
+    dismilUnit: "Dismil / Decimal",
+    
+    // Seasons
+    rabi: "Rabi",
+    kharif: "Kharif",
+    zaid: "Zaid",
+    winter: "Winter",
+    summer: "Summer",
+    wholeYear: "Whole Year",
+    
+    // Loading
+    analyzingData: "Analyzing data — please wait…",
+    gettingResults: "Getting yield prediction and crop recommendations...",
+    
+    // Crops
+    crops: ["Wheat", "Maize", "Rice", "Soybean", "Sugarcane", "Sunflower", "Tobacco", "Urad", "Turmeric", "Potato", "Ragi", "Sweet Potato", "Moong", "Jute", "Jowar", "Gram", "Ginger", "Cotton"]
+  },
+  
+  hi: {
+    // Page headers
+    title: "फसल उपज पूर्वानुमान",
+    description: "सटीक उपज भविष्यवाणी और सुझाव पाने के लिए अपना खेत डेटा दर्ज करें।",
+    returnHome: "मुख्य पृष्ठ पर वापस जाएं",
+    
+    // Form labels
+    areaConverter: "भूमि क्षेत्र कनवर्टर (हेक्टेयर में)",
+    enterValue: "मान दर्ज करें",
+    sqmPerUnit: "प्रति यूनिट वर्ग मीटर (निश्चित इकाइयों के लिए स्वचालित)",
+    convert: "कनवर्ट करें",
+    areaConverterNote: "नोट: बीघा/कठा/डिसमिल राज्य के अनुसार अलग होते हैं — ऐप आपके पहचाने गए राज्य के लिए सामान्य मान स्वचालित रूप से भरेगा; आप आवश्यकता अनुसार बदल सकते हैं।",
+    result: "परिणाम",
+    useLocation: "मेरा स्थान उपयोग करें",
+    detectedLocation: "पहचाना गया स्थान यहां दिखेगा",
+    location: "स्थान (राज्य)",
+    selectState: "राज्य चुनें",
+    crop: "फसल",
+    selectCrop: "फसल चुनें",
+    soilType: "मिट्टी का प्रकार",
+    soilAutoFill: "राज्य प्रीसेट से स्वचालित भरा गया (कोई बाहरी API नहीं)",
+    avgTemp: "औसत तापमान (°C)",
+    tempAutoFill: "मौसम API से स्वचालित भरा गया",
+    rainfall: "वर्षा (mm)",
+    rainfallAutoFill: "मौसम API से स्वचालित भरा गया",
+    humidity: "आर्द्रता (%)",
+    humidityAutoFill: "मौसम API से स्वचालित भरा गया",
+    area: "क्षेत्रफल (हेक्टेयर)",
+    pesticides: "कीटनाशक (ग्राम/हेक्टेयर)",
+    season: "मौसम",
+    selectSeason: "मौसम चुनें",
+    fertilizer: "उर्वरक (ग्राम/हेक्टेयर)",
+    
+    // Button text
+    predictButton: "उपज की भविष्यवाणी करें और फसल सुझाव प्राप्त करें",
+    
+    // Results
+    yieldPrediction: "उपज पूर्वानुमान",
+    cropRecommendations: "फसल सुझाव",
+    predictionResult: "पूर्वानुमान परिणाम",
+    estimatedYield: "अनुमानित उपज",
+    recommendations: "सुझाव",
+    cropResultTitle: "फसल सुझाव",
+    bestRecommended: "🏆 सर्वोत्तम अनुशंसित फसल",
+    allComparisons: "सभी फसल तुलनाएं",
+    expectedYield: "अपेक्षित उपज:",
+    fertilizerLabel: "उर्वरक:",
+    pesticideLabel: "कीटनाशक:",
+    
+    // Units
+    hectareUnit: "हेक्टेयर (ha)",
+    acreUnit: "एकड़",
+    sqMeterUnit: "वर्ग मीटर (m²)",
+    sqFtUnit: "वर्ग फुट (ft²)",
+    bighaUnit: "बीघा",
+    kathaUnit: "कठा",
+    dismilUnit: "डिसमिल / दशमांश",
+    
+    // Seasons
+    rabi: "रबी",
+    kharif: "खरीफ",
+    zaid: "जायद",
+    winter: "सर्दी",
+    summer: "गर्मी",
+    wholeYear: "पूरा साल",
+    
+    // Loading
+    analyzingData: "डेटा का विश्लेषण — कृपया प्रतीक्षा करें…",
+    gettingResults: "उपज पूर्वानुमान और फसल सुझाव प्राप्त कर रहे हैं...",
+    
+    // Crops
+    crops: ["गेहूं", "मक्का", "चावल", "सोयाबीन", "गन्ना", "सूरजमुखी", "तंबाकू", "उड़द", "हल्दी", "आलू", "रागी", "शकरकंद", "मूंग", "जूट", "ज्वार", "चना", "अदरक", "कपास"]
+  },
+  
+  or: {
+    // Page headers (Odia)
+    title: "ଫସଲ ଉତ୍ପାଦନ ପୂର୍ବାନୁମାନ",
+    description: "ସଠିକ ଉତ୍ପାଦନ ପୂର୍ବାନୁମାନ ଏବଂ ସୁପାରିଶ ପାଇବା ପାଇଁ ଆପଣଙ୍କ ଚାଷ ତଥ୍ୟ ପ୍ରବେଶ କରନ୍ତୁ।",
+    returnHome: "ମୂଳପୃଷ୍ଠାକୁ ଫେରନ୍ତୁ",
+    
+    // Form labels
+    areaConverter: "ଜମି କ୍ଷେତ୍ର ପରିବର୍ତ୍ତକ (ହେକ୍ଟରରେ)",
+    enterValue: "ମୂଲ୍ୟ ପ୍ରବେଶ କରନ୍ତୁ",
+    sqmPerUnit: "ପ୍ରତି ଏକକରେ ବର୍ଗ ମିଟର (ସ୍ଥିର ଏକକ ପାଇଁ ସ୍ୱୟଂଚାଳିତ)",
+    convert: "ପରିବର୍ତ୍ତନ କରନ୍ତୁ",
+    areaConverterNote: "ଟିପ୍ପଣୀ: ବିଘା/କାଠା/ଡିସମିଲ ରାଜ୍ୟ ଅନୁସାରେ ଭିନ୍ନ — ଆପ୍ ଆପଣଙ୍କ ଚିହ୍ନିତ ରାଜ୍ୟ ପାଇଁ ସାଧାରଣ ମୂଲ୍ୟ ସ୍ୱୟଂଚାଳିତ ଭାବରେ ପୂରଣ କରିବ; ଆପଣ ଆବଶ୍ୟକତା ଅନୁସାରେ ବଦଳାଇ ପାରିବେ।",
+    result: "ଫଳାଫଳ",
+    useLocation: "ମୋ ସ୍ଥାନ ବ୍ୟବହାର କରନ୍ତୁ",
+    detectedLocation: "ଚିହ୍ନିତ ସ୍ଥାନ ଏଠାରେ ଦେଖାଯିବ",
+    location: "ସ୍ଥାନ (ରାଜ୍ୟ)",
+    selectState: "ରାଜ୍ୟ ଚୟନ କରନ୍ତୁ",
+    crop: "ଫସଲ",
+    selectCrop: "ଫସଲ ଚୟନ କରନ୍ତୁ",
+    soilType: "ମାଟି ପ୍ରକାର",
+    soilAutoFill: "ରାଜ୍ୟ ପ୍ରିସେଟରୁ ସ୍ୱୟଂଚାଳିତ ପୂରଣ (କୌଣସି ବାହ୍ୟ API ନୁହେଁ)",
+    avgTemp: "ହାରାହାରି ତାପମାତ୍ରା (°C)",
+    tempAutoFill: "ପାଗ API ରୁ ସ୍ୱୟଂଚାଳିତ ପୂରଣ",
+    rainfall: "ବର୍ଷା (mm)",
+    rainfallAutoFill: "ପାଗ API ରୁ ସ୍ୱୟଂଚାଳିତ ପୂରଣ",
+    humidity: "ଆର୍ଦ୍ରତା (%)",
+    humidityAutoFill: "ପାଗ API ରୁ ସ୍ୱୟଂଚାଳିତ ପୂରଣ",
+    area: "କ୍ଷେତ୍ରଫଳ (ହେକ୍ଟର)",
+    pesticides: "କୀଟନାଶକ (ଗ୍ରାମ/ହେକ୍ଟର)",
+    season: "ଋତୁ",
+    selectSeason: "ଋତୁ ଚୟନ କରନ୍ତୁ",
+    fertilizer: "ସାର (ଗ୍ରାମ/ହେକ୍ଟର)",
+    
+    // Button text
+    predictButton: "ଉତ୍ପାଦନ ପୂର୍ବାନୁମାନ ଓ ଫସଲ ସୁପାରିଶ ପାଆନ୍ତୁ",
+    
+    // Results
+    yieldPrediction: "ଉତ୍ପାଦନ ପୂର୍ବାନୁମାନ",
+    cropRecommendations: "ଫସଲ ସୁପାରିଶ",
+    predictionResult: "ପୂର୍ବାନୁମାନ ଫଳାଫଳ",
+    estimatedYield: "ଅନୁମାନିତ ଉତ୍ପାଦନ",
+    recommendations: "ସୁପାରିଶ",
+    cropResultTitle: "ଫସଲ ସୁପାରିଶ",
+    bestRecommended: "🏆 ସର୍ବୋତ୍ତମ ସୁପାରିଶିତ ଫସଲ",
+    allComparisons: "ସମସ୍ତ ଫସଲ ତୁଳନା",
+    expectedYield: "ଆଶା କରାଯାଉଥିବା ଉତ୍ପାଦନ:",
+    fertilizerLabel: "ସାର:",
+    pesticideLabel: "କୀଟନାଶକ:",
+    
+    // Units
+    hectareUnit: "ହେକ୍ଟର (ha)",
+    acreUnit: "ଏକର",
+    sqMeterUnit: "ବର୍ଗ ମିଟର (m²)",
+    sqFtUnit: "ବର୍ଗ ଫୁଟ (ft²)",
+    bighaUnit: "ବିଘା",
+    kathaUnit: "କାଠା",
+    dismilUnit: "ଡିସମିଲ / ଦଶମାଂଶ",
+    
+    // Seasons
+    rabi: "ରବି",
+    kharif: "ଖରିଫ",
+    zaid: "ଜାଇଦ",
+    winter: "ଶୀତ",
+    summer: "ଗ୍ରୀଷ୍ମ",
+    wholeYear: "ସାରା ବର୍ଷ",
+    
+    // Loading
+    analyzingData: "ତଥ୍ୟ ବିଶ୍ଳେଷଣ କରୁଛି — ଦୟାକରି ଅପେକ୍ଷା କରନ୍ତୁ…",
+    gettingResults: "ଉତ୍ପାଦନ ପୂର୍ବାନୁମାନ ଓ ଫସଲ ସୁପାରିଶ ପାଇବା...",
+    
+    // Crops
+    crops: ["ଗହମ", "ମକା", "ଚାଉଳ", "ସୋୟାବିନ୍", "ଆଖୁ", "ସୂର୍ଯ୍ୟମୁଖୀ", "ତମାଖୁ", "ଉରଦ", "ହଳଦୀ", "ଆଳୁ", "ରାଗୀ", "ମିଠା ଆଳୁ", "ମୁଗ", "ଝୁଟା", "ଜୁଆର", "ଚଣା", "ଅଦା", "କପା"]
+  },
+  
+  pa: {
+    // Page headers (Punjabi)
+    title: "ਫਸਲ ਉਤਪਾਦਨ ਪੂਰਵਾਨੁਮਾਨ",
+    description: "ਸਟੀਕ ਉਤਪਾਦਨ ਪੂਰਵਾਨੁਮਾਨ ਅਤੇ ਸੁਝਾਅ ਪ੍ਰਾਪਤ ਕਰਨ ਲਈ ਆਪਣੇ ਖੇਤ ਦਾ ਡੇਟਾ ਦਰਜ ਕਰੋ।",
+    returnHome: "ਮੁੱਖ ਪੰਨੇ 'ਤੇ ਵਾਪਸ ਜਾਓ",
+    
+    // Form labels
+    areaConverter: "ਜ਼ਮੀਨੀ ਖੇਤਰ ਕਨਵਰਟਰ (ਹੈਕਟੇਅਰ ਵਿੱਚ)",
+    enterValue: "ਮੁੱਲ ਦਰਜ ਕਰੋ",
+    sqmPerUnit: "ਪ੍ਰਤੀ ਯੂਨਿਟ ਵਰਗ ਮੀਟਰ (ਨਿਰਧਾਰਤ ਯੂਨਿਟਾਂ ਲਈ ਸਵੈਚਲਿਤ)",
+    convert: "ਕਨਵਰਟ ਕਰੋ",
+    areaConverterNote: "ਨੋਟ: ਬੀਘਾ/ਕੱਠਾ/ਡਿਸਮਿਲ ਰਾਜ ਅਨੁਸਾਰ ਵੱਖਰੇ ਹੁੰਦੇ ਹਨ — ਐਪ ਤੁਹਾਡੇ ਪਛਾਣੇ ਗਏ ਰਾਜ ਲਈ ਆਮ ਮੁੱਲ ਸਵੈਚਲਿਤ ਰੂਪ ਵਿੱਚ ਭਰੇਗਾ; ਤੁਸੀਂ ਲੋੜ ਅਨੁਸਾਰ ਬਦਲ ਸਕਦੇ ਹੋ।",
+    result: "ਨਤੀਜਾ",
+    useLocation: "ਮੇਰਾ ਸਥਾਨ ਵਰਤੋ",
+    detectedLocation: "ਪਛਾਣਿਆ ਗਿਆ ਸਥਾਨ ਇੱਥੇ ਦਿਖਾਈ ਦੇਵੇਗਾ",
+    location: "ਸਥਾਨ (ਰਾਜ)",
+    selectState: "ਰਾਜ ਚੁਣੋ",
+    crop: "ਫਸਲ",
+    selectCrop: "ਫਸਲ ਚੁਣੋ",
+    soilType: "ਮਿੱਟੀ ਦੀ ਕਿਸਮ",
+    soilAutoFill: "ਰਾਜ ਪ੍ਰੀਸੈੱਟ ਤੋਂ ਸਵੈਚਲਿਤ ਭਰਿਆ ਗਿਆ (ਕੋਈ ਬਾਹਰੀ API ਨਹੀਂ)",
+    avgTemp: "ਔਸਤ ਤਾਪਮਾਨ (°C)",
+    tempAutoFill: "ਮੌਸਮ API ਤੋਂ ਸਵੈਚਲਿਤ ਭਰਿਆ ਗਿਆ",
+    rainfall: "ਮੀਂਹ (mm)",
+    rainfallAutoFill: "ਮੌਸਮ API ਤੋਂ ਸਵੈਚਲਿਤ ਭਰਿਆ ਗਿਆ",
+    humidity: "ਨਮੀ (%)",
+    humidityAutoFill: "ਮੌਸਮ API ਤੋਂ ਸਵੈਚਲਿਤ ਭਰਿਆ ਗਿਆ",
+    area: "ਖੇਤਰਫਲ (ਹੈਕਟੇਅਰ)",
+    pesticides: "ਕੀੜੇ-ਮਾਰ ਦਵਾਈ (ਗਰਾਮ/ਹੈਕਟੇਅਰ)",
+    season: "ਮੌਸਮ",
+    selectSeason: "ਮੌਸਮ ਚੁਣੋ",
+    fertilizer: "ਖਾਦ (ਗਰਾਮ/ਹੈਕਟੇਅਰ)",
+    
+    // Button text
+    predictButton: "ਉਤਪਾਦਨ ਪੂਰਵਾਨੁਮਾਨ ਅਤੇ ਫਸਲ ਸੁਝਾਅ ਪ੍ਰਾਪਤ ਕਰੋ",
+    
+    // Results
+    yieldPrediction: "ਉਤਪਾਦਨ ਪੂਰਵਾਨੁਮਾਨ",
+    cropRecommendations: "ਫਸਲ ਸੁਝਾਅ",
+    predictionResult: "ਪੂਰਵਾਨੁਮਾਨ ਨਤੀਜਾ",
+    estimatedYield: "ਅਨੁਮਾਨਿਤ ਉਤਪਾਦਨ",
+    recommendations: "ਸੁਝਾਅ",
+    cropResultTitle: "ਫਸਲ ਸੁਝਾਅ",
+    bestRecommended: "🏆 ਸਭ ਤੋਂ ਵਧੀਆ ਸਿਫਾਰਿਸ਼ੀ ਫਸਲ",
+    allComparisons: "ਸਾਰੇ ਫਸਲ ਦੀ ਤੁਲਨਾ",
+    expectedYield: "ਅਪੇਖਿਤ ਉਤਪਾਦਨ:",
+    fertilizerLabel: "ਖਾਦ:",
+    pesticideLabel: "ਕੀੜੇ-ਮਾਰ ਦਵਾਈ:",
+    
+    // Units
+    hectareUnit: "ਹੈਕਟੇਅਰ (ha)",
+    acreUnit: "ਏਕੜ",
+    sqMeterUnit: "ਵਰਗ ਮੀਟਰ (m²)",
+    sqFtUnit: "ਵਰਗ ਫੁੱਟ (ft²)",
+    bighaUnit: "ਬੀਘਾ",
+    kathaUnit: "ਕੱਠਾ",
+    dismilUnit: "ਡਿਸਮਿਲ / ਦਸ਼ਮਲਵ",
+    
+    // Seasons
+    rabi: "ਰਬੀ",
+    kharif: "ਖਰੀਫ",
+    zaid: "ਜ਼ਾਇਦ",
+    winter: "ਸਰਦੀ",
+    summer: "ਗਰਮੀ",
+    wholeYear: "ਪੂਰਾ ਸਾਲ",
+    
+    // Loading
+    analyzingData: "ਡੇਟਾ ਦਾ ਵਿਸ਼ਲੇਸ਼ਣ — ਕਿਰਪਾ ਕਰਕੇ ਉਡੀਕ ਕਰੋ…",
+    gettingResults: "ਉਤਪਾਦਨ ਪੂਰਵਾਨੁਮਾਨ ਅਤੇ ਫਸਲ ਸੁਝਾਅ ਪ੍ਰਾਪਤ ਕਰ ਰਹੇ ਹਾਂ...",
+    
+    // Crops
+    crops: ["ਕਣਕ", "ਮੱਕੀ", "ਚਾਵਲ", "ਸੋਇਆਬੀਨ", "ਗੰਨਾ", "ਸੂਰਜਮੁਖੀ", "ਤਮਾਕੂ", "ਉੜਦ", "ਹਲਦੀ", "ਆਲੂ", "ਰਾਗੀ", "ਮਿੱਠਾ ਆਲੂ", "ਮੂੰਗ", "ਜੂਟ", "ਜੁਆਰ", "ਚੰਨਾ", "ਅਦਰਕ", "ਕਪਾਹ"]
+  },
+  
+  ml: {
+    // Page headers (Malayalam)
+    title: "വിള വിളവ് പ്രവചനം",
+    description: "കൃത്യമായ വിളവ് പ്രവചനവും അനുയോജ്യമായ ശുപാർശകളും ലഭിക്കാൻ നിങ്ങളുടെ കൃഷി ഡാറ്റ നൽകുക.",
+    returnHome: "ഹോംപേജിലേക്ക് മടങ്ങുക",
+    
+    // Form labels
+    areaConverter: "ഭൂമി വിസ്തീർണ്ണ കൺവെർട്ടർ (ഹെക്ടറിൽ)",
+    enterValue: "മൂല്യം നൽകുക",
+    sqmPerUnit: "യൂണിറ്റിന് ചതുരശ്ര മീറ്റർ (നിശ്ചിത യൂണിറ്റുകൾക്ക് സ്വയം)",
+    convert: "കൺവെർട്ട് ചെയ്യുക",
+    areaConverterNote: "കുറിപ്പ്: ബിഘ/കാത്ത/ഡിസ്മിൽ സംസ്ഥാനം അനുസരിച്ച് വ്യത്യാസപ്പെടുന്നു — ആപ്പ് നിങ്ങളുടെ തിരിച്ചറിഞ്ഞ സംസ്ഥാനത്തിന് സാധാരണ മൂല്യങ്ങൾ സ്വയമേവ പൂരിപ്പിക്കും; ആവശ്യമെങ്കിൽ നിങ്ങൾക്ക് മാറ്റാം.",
+    result: "ഫലം",
+    useLocation: "എന്റെ സ്ഥാനം ഉപയോഗിക്കുക",
+    detectedLocation: "തിരിച്ചറിഞ്ഞ സ്ഥാനം ഇവിടെ കാണിക്കും",
+    location: "സ്ഥാനം (സംസ്ഥാനം)",
+    selectState: "സംസ്ഥാനം തിരഞ്ഞെടുക്കുക",
+    crop: "വിള",
+    selectCrop: "വിള തിരഞ്ഞെടുക്കുക",
+    soilType: "മണ്ണിന്റെ തരം",
+    soilAutoFill: "സംസ്ഥാന പ്രീസെറ്റിൽ നിന്ന് സ്വയമേവ പൂരിപ്പിച്ചത് (ബാഹ്യ API ഇല്ല)",
+    avgTemp: "ശരാശരി താപനില (°C)",
+    tempAutoFill: "കാലാവസ്ഥ API-യിൽ നിന്ന് സ്വയമേവ പൂരിപ്പിച്ചത്",
+    rainfall: "മഴ (mm)",
+    rainfallAutoFill: "കാലാവസ്ഥ API-യിൽ നിന്ന് സ്വയമേവ പൂരിപ്പിച്ചത്",
+    humidity: "ആർദ്രത (%)",
+    humidityAutoFill: "കാലാവസ്ഥ API-യിൽ നിന്ന് സ്വയമേവ പൂരിപ്പിച്ചത്",
+    area: "വിസ്തീർണ്ണം (ഹെക്ടർ)",
+    pesticides: "കീടനാശിനി (ഗ്രാം/ഹെക്ടർ)",
+    season: "സീസൺ",
+    selectSeason: "സീസൺ തിരഞ്ഞെടുക്കുക",
+    fertilizer: "വളം (ഗ്രാം/ഹെക്ടർ)",
+    
+    // Button text
+    predictButton: "വിളവ് പ്രവചനവും വിള ശുപാർശകളും നേടുക",
+    
+    // Results
+    yieldPrediction: "വിളവ് പ്രവചനം",
+    cropRecommendations: "വിള ശുപാർശകൾ",
+    predictionResult: "പ്രവചന ഫലം",
+    estimatedYield: "കണക്കാക്കിയ വിളവ്",
+    recommendations: "ശുപാർശകൾ",
+    cropResultTitle: "വിള ശുപാർശകൾ",
+    bestRecommended: "🏆 ഏറ്റവും മികച്ച ശുപാർശിത വിള",
+    allComparisons: "എല്ലാ വിള താരതമ്യങ്ങളും",
+    expectedYield: "പ്രതീക്ഷിക്കുന്ന വിളവ്:",
+    fertilizerLabel: "വളം:",
+    pesticideLabel: "കീടനാശിനി:",
+    
+    // Units
+    hectareUnit: "ഹെക്ടർ (ha)",
+    acreUnit: "ഏക്കർ",
+    sqMeterUnit: "ചതുരശ്ര മീറ്റർ (m²)",
+    sqFtUnit: "ചതുരശ്ര അടി (ft²)",
+    bighaUnit: "ബിഘ",
+    kathaUnit: "കാത്ത",
+    dismilUnit: "ഡിസ്മിൽ / ദശാംശം",
+    
+    // Seasons
+    rabi: "റാബി",
+    kharif: "ഖരിഫ്",
+    zaid: "സയിദ്",
+    winter: "ശീതകാലം",
+    summer: "വേനൽകാലം",
+    wholeYear: "മുഴുവൻ വർഷവും",
+    
+    // Loading
+    analyzingData: "ഡാറ്റ വിശകലനം ചെയ്യുന്നു — കാത്തിരിക്കുക…",
+    gettingResults: "വിളവ് പ്രവചനവും വിള ശുപാർശകളും നേടുന്നു...",
+    
+    // Crops
+    crops: ["ഗോതമ്പ്", "ചോളം", "നെല്ല്", "സോയാബീൻ", "കരിമ്പ്", "സൂര്യകാന്തി", "പുകയില", "ഉഴുന്ന്", "മഞ്ഞൾ", "ഉരുളക്കിഴങ്ങ്", "രാഗി", "മധുരക്കിഴങ്ങ്", "ചെറുപയർ", "ചണം", "ജോവാർ", "കടല", "ഇഞ്ചി", "പരുത്തി"]
+  },
+  
+  ta: {
+    // Page headers (Tamil)
+    title: "பயிர் மகசூல் கணிப்பு",
+    description: "துல்லியமான மகசூல் கணிப்பு மற்றும் பொருத்தமான பரிந்துரைகளைப் பெற உங்கள் பண்ணையின் தகவல்களை உள்ளிடுக.",
+    returnHome: "முகப்புப் பக்கத்திற்குத் திரும்பு",
+    
+    // Form labels
+    areaConverter: "நிலப் பரப்பு மாற்றி (ஹெக்டேரில்)",
+    enterValue: "மதிப்பை உள்ளிடுக",
+    sqmPerUnit: "யூனிட்டுக்கு சதுர மீட்டர் (நிர்ணயிக்கப்பட்ட யூனிட்களுக்கு தானாக)",
+    convert: "மாற்றுக",
+    areaConverterNote: "குறிப்பு: பீகா/கத்தா/டிஸ்மில் மாநிலத்தைப் பொறுத்து மாறுபடும் — ஆப் உங்கள் அடையாளம் காணப்பட்ட மாநிலத்திற்கான பொதுவான மதிப்புகளை தானாகவே நிரப்பும்; தேவைப்பட்டால் நீங்கள் மாற்றலாம்.",
+    result: "முடிவு",
+    useLocation: "எனது இருப்பிடத்தைப் பயன்படுத்துக",
+    detectedLocation: "கண்டறியப்பட்ட இருப்பிடம் இங்கே தோன்றும்",
+    location: "இருப்பிடம் (மாநிலம்)",
+    selectState: "மாநிலத்தைத் தேர்வு செய்க",
+    crop: "பயிர்",
+    selectCrop: "பயிரைத் தேர்வு செய்க",
+    soilType: "மண் வகை",
+    soilAutoFill: "மாநில முன்னமைவிலிருந்து தானாக நிரப்பப்பட்டது (வெளிப்புற API இல்லை)",
+    avgTemp: "சராசரி வெப்பநிலை (°C)",
+    tempAutoFill: "வானிலை API-லிருந்து தானாக நிரப்பப்பட்டது",
+    rainfall: "மழையளவு (mm)",
+    rainfallAutoFill: "வானிலை API-லிருந்து தானாக நிரப்பப்பட்டது",
+    humidity: "ஈரப்பதம் (%)",
+    humidityAutoFill: "வானிலை API-லிருந்து தானாக நிரப்பப்பட்டது",
+    area: "பரப்பளவு (ஹெக்டேர்)",
+    pesticides: "பூச்சிக்கொல்லி (கிராம்/ஹெக்டேர்)",
+    season: "பருவம்",
+    selectSeason: "பருவத்தைத் தேர்வு செய்க",
+    fertilizer: "உரம் (கிராம்/ஹெக்டேர்)",
+    
+    // Button text
+    predictButton: "மகசூல் கணிப்பு மற்றும் பயிர் பரிந்துரைகளைப் பெறுக",
+    
+    // Results
+    yieldPrediction: "மகசூல் கணிப்பு",
+    cropRecommendations: "பயிர் பரிந்துரைகள்",
+    predictionResult: "கணிப்பு முடிவு",
+    estimatedYield: "மதிப்பிடப்பட்ட மகசூல்",
+    recommendations: "பரிந்துரைகள்",
+    cropResultTitle: "பயிர் பரிந்துரைகள்",
+    bestRecommended: "🏆 சிறந்த பரிந்துரைக்கப்பட்ட பயிர்",
+    allComparisons: "அனைத்து பயிர் ஒப்பீடுகள்",
+    expectedYield: "எதிர்பார்க்கப்படும் மகசூல்:",
+    fertilizerLabel: "உரம்:",
+    pesticideLabel: "பூச்சிக்கொல்லி:",
+    
+    // Units
+    hectareUnit: "ஹெக்டேர் (ha)",
+    acreUnit: "ஏக்கர்",
+    sqMeterUnit: "சதுர மீட்டர் (m²)",
+    sqFtUnit: "சதுர அடி (ft²)",
+    bighaUnit: "பீகா",
+    kathaUnit: "கத்தா",
+    dismilUnit: "டிஸ்மில் / தசமம்",
+    
+    // Seasons
+    rabi: "ராபி",
+    kharif: "கரீஃப்",
+    zaid: "சயீத்",
+    winter: "குளிர்காலம்",
+    summer: "கோடைகாலம்",
+    wholeYear: "முழு ஆண்டும்",
+    
+    // Loading
+    analyzingData: "தரவு பகுப்பாய்வு செய்யப்படுகிறது — தயவுசெய்து காத்திருக்கவும்…",
+    gettingResults: "மகசூல் கணிப்பு மற்றும் பயிர் பரிந்துரைகளைப் பெறுகிறோம்...",
+    
+    // Crops
+    crops: ["கோதுமை", "சோளம்", "அரிசி", "சோயாபீன்", "கரும்பு", "சூரியகாந்தி", "புகையிலை", "உளுந்து", "மஞ்சள்", "உருளைக்கிழங்கு", "ராகி", "சர்க்கரைவள்ளிக் கிழங்கு", "பச்சைப்பயறு", "சணல்", "சோளம்", "கடலைப்பருப்பு", "இஞ்சி", "பருத்தி"]
+  },
+  
+  gu: {
+    // Page headers (Gujarati)
+    title: "પાક ઉત્પાદન આગાહી",
+    description: "સચોટ ઉત્પાદન આગાહી અને યોગ્ય ભલામણો મેળવવા માટે તમારા ખેતરનો ડેટા દાખલ કરો.",
+    returnHome: "હોમપેજ પર પાછા જાઓ",
+    
+    // Form labels
+    areaConverter: "જમીન વિસ્તાર કન્વર્ટર (હેક્ટરમાં)",
+    enterValue: "મૂલ્ય દાખલ કરો",
+    sqmPerUnit: "એકમ દીઠ ચોરસ મીટર (નિશ્ચિત એકમો માટે ઓટો)",
+    convert: "કન્વર્ટ કરો",
+    areaConverterNote: "નોંધ: બિઘા/કઠ્ઠા/ડિસમિલ રાજ્ય અનુસાર બદલાય છે — એપ્લિકેશન તમારા ઓળખાયેલા રાજ્ય માટે સામાન્ય મૂલ્યો આપોઆપ ભરશે; જરૂર પડે તો તમે બદલી શકો છો.",
+    result: "પરિણામ",
+    useLocation: "મારા સ્થાનનો ઉપયોગ કરો",
+    detectedLocation: "ઓળખાયેલ સ્થાન અહીં દેખાશે",
+    location: "સ્થાન (રાજ્ય)",
+    selectState: "રાજ્ય પસંદ કરો",
+    crop: "પાક",
+    selectCrop: "પાક પસંદ કરો",
+    soilType: "માટીનો પ્રકાર",
+    soilAutoFill: "રાજ્ય પ્રીસેટથી આપોઆપ ભરાયું (કોઈ બાહ્ય API નથી)",
+    avgTemp: "સરેરાશ તાપમાન (°C)",
+    tempAutoFill: "હવામાન API થી આપોઆપ ભરાયું",
+    rainfall: "વરસાદ (mm)",
+    rainfallAutoFill: "હવામાન API થી આપોઆપ ભરાયું",
+    humidity: "ભેજ (%)",
+    humidityAutoFill: "હવામાન API થી આપોઆપ ભરાયું",
+    area: "વિસ્તાર (હેક્ટર)",
+    pesticides: "જંતુનાશક (ગ્રામ/હેક્ટર)",
+    season: "મોસમ",
+    selectSeason: "મોસમ પસંદ કરો",
+    fertilizer: "ખાતર (ગ્રામ/હેક્ટર)",
+    
+    // Button text
+    predictButton: "ઉત્પાદન આગાહી અને પાક ભલામણો મેળવો",
+    
+    // Results
+    yieldPrediction: "ઉત્પાદન આગાહી",
+    cropRecommendations: "પાક ભલામણો",
+    predictionResult: "આગાહી પરિણામ",
+    estimatedYield: "અનુમાનિત ઉત્પાદન",
+    recommendations: "ભલામણો",
+    cropResultTitle: "પાક ભલામણો",
+    bestRecommended: "🏆 શ્રેષ્ઠ ભલામણિત પાક",
+    allComparisons: "બધી પાક તુલના",
+    expectedYield: "અપેક્ષિત ઉત્પાદન:",
+    fertilizerLabel: "ખાતર:",
+    pesticideLabel: "જંતુનાશક:",
+    
+    // Units
+    hectareUnit: "હેક્ટર (ha)",
+    acreUnit: "એકર",
+    sqMeterUnit: "ચોરસ મીટર (m²)",
+    sqFtUnit: "ચોરસ ફૂટ (ft²)",
+    bighaUnit: "બિઘા",
+    kathaUnit: "કઠ્ઠા",
+    dismilUnit: "ડિસમિલ / દશાંશ",
+    
+    // Seasons
+    rabi: "રબી",
+    kharif: "ખરીફ",
+    zaid: "ઝાયદ",
+    winter: "શિયાળો",
+    summer: "ઉનાળો",
+    wholeYear: "આખું વર્ષ",
+    
+    // Loading
+    analyzingData: "ડેટાનું વિશ્લેષણ કરી રહ્યા છીએ — કૃપા કરી રાહ જુઓ…",
+    gettingResults: "ઉત્પાદન આગાહી અને પાક ભલામણો મેળવી રહ્યા છીએ...",
+    
+    // Crops
+    crops: ["ઘઉં", "મકાઈ", "ભાત", "સોયાબીન", "શેરડી", "સૂર્યમુખી", "તમાકુ", "ઉડદ", "હળદર", "બટાકા", "રાગી", "મીઠા બટાકા", "મગ", "શણ", "જુવાર", "ચણા", "આદુ", "કપાસ"]
+  },
+  
+  mr: {
+    // Page headers (Marathi)
+    title: "पीक उत्पादन अंदाज",
+    description: "अचूक उत्पादन अंदाज आणि योग्य शिफारसी मिळवण्यासाठी तुमच्या शेताचा डेटा टाका.",
+    returnHome: "होमपेजवर परत जा",
+    
+    // Form labels
+    areaConverter: "जमीन क्षेत्र कन्व्हर्टर (हेक्टरमध्ये)",
+    enterValue: "मूल्य टाका",
+    sqmPerUnit: "प्रति एकक चौरस मीटर (निश्चित एककांसाठी स्वयं)",
+    convert: "कन्व्हर्ट करा",
+    areaConverterNote: "टीप: बिघा/कठ्ठा/डिसमिल राज्यानुसार बदलते — अॅप तुमच्या ओळखल्या गेलेल्या राज्यासाठी सामान्य मूल्ये स्वयं भरेल; आवश्यकतेनुसार तुम्ही बदलू शकता.",
+    result: "परिणाम",
+    useLocation: "माझे स्थान वापरा",
+    detectedLocation: "ओळखले गेलेले स्थान येथे दिसेल",
+    location: "स्थान (राज्य)",
+    selectState: "राज्य निवडा",
+    crop: "पीक",
+    selectCrop: "पीक निवडा",
+    soilType: "माती प्रकार",
+    soilAutoFill: "राज्य प्रीसेटवरून स्वयं भरले (कोणते बाह्य API नाही)",
+    avgTemp: "सरासरी तापमान (°C)",
+    tempAutoFill: "हवामान API वरून स्वयं भरले",
+    rainfall: "पाऊस (mm)",
+    rainfallAutoFill: "हवामान API वरून स्वयं भरले",
+    humidity: "आर्द्रता (%)",
+    humidityAutoFill: "हवामान API वरून स्वयं भरले",
+    area: "क्षेत्रफळ (हेक्टर)",
+    pesticides: "किटकनाशक (ग्राम/हेक्टर)",
+    season: "हंगाम",
+    selectSeason: "हंगाम निवडा",
+    fertilizer: "खत (ग्राम/हेक्टर)",
+    
+    // Button text
+    predictButton: "उत्पादन अंदाज आणि पीक शिफारसी मिळवा",
+    
+    // Results
+    yieldPrediction: "उत्पादन अंदाज",
+    cropRecommendations: "पीक शिफारसी",
+    predictionResult: "अंदाज परिणाम",
+    estimatedYield: "अंदाजित उत्पादन",
+    recommendations: "शिफारसी",
+    cropResultTitle: "पीक शिफारसी",
+    bestRecommended: "🏆 सर्वोत्तम शिफारशित पीक",
+    allComparisons: "सर्व पीक तुलना",
+    expectedYield: "अपेक्षित उत्पादन:",
+    fertilizerLabel: "खत:",
+    pesticideLabel: "किटकनाशक:",
+    
+    // Units
+    hectareUnit: "हेक्टर (ha)",
+    acreUnit: "एकर",
+    sqMeterUnit: "चौरस मीटर (m²)",
+    sqFtUnit: "चौरस फूट (ft²)",
+    bighaUnit: "बिघा",
+    kathaUnit: "कठ्ठा",
+    dismilUnit: "डिसमिल / दशांश",
+    
+    // Seasons
+    rabi: "रब्बी",
+    kharif: "खरीप",
+    zaid: "झायद",
+    winter: "हिवाळा",
+    summer: "उन्हाळा",
+    wholeYear: "संपूर्ण वर्ष",
+    
+    // Loading
+    analyzingData: "डेटाचे विश्लेषण करत आहे — कृपया प्रतीक्षा करा…",
+    gettingResults: "उत्पादन अंदाज आणि पीक शिफारसी मिळवत आहे...",
+    
+    // Crops
+    crops: ["गहू", "मका", "तांदूळ", "सोयाबीन", "ऊस", "सूर्यफूल", "तंबाकू", "उडीद", "हळद", "बटाटा", "रागी", "गोड बटाटा", "मूग", "तांतुवा", "ज्वार", "हरभरा", "आले", "कापूस"]
+  },
+  
+  bn: {
+    // Page headers (Bengali)
+    title: "ফসল উৎপাদন পূর্বাভাস",
+    description: "সঠিক উৎপাদন পূর্বাভাস এবং উপযুক্ত সুপারিশ পেতে আপনার খামারের তথ্য প্রবেশ করুন।",
+    returnHome: "হোমপেজে ফিরে যান",
+    
+    // Form labels
+    areaConverter: "জমির এলাকা রূপান্তরকারী (হেক্টরে)",
+    enterValue: "মান প্রবেশ করুন",
+    sqmPerUnit: "প্রতি একক বর্গ মিটার (নির্দিষ্ট এককের জন্য স্বয়ংক্রিয়)",
+    convert: "রূপান্তর করুন",
+    areaConverterNote: "দ্রষ্টব্য: বিঘা/কাঠা/ডিসমিল রাজ্য অনুসারে ভিন্ন — অ্যাপ আপনার চিহ্নিত রাজ্যের জন্য সাধারণ মান স্বয়ংক্রিয়ভাবে পূরণ করবে; প্রয়োজনে আপনি পরিবর্তন করতে পারেন।",
+    result: "ফলাফল",
+    useLocation: "আমার অবস্থান ব্যবহার করুন",
+    detectedLocation: "সনাক্ত করা অবস্থান এখানে দেখাবে",
+    location: "অবস্থান (রাজ্য)",
+    selectState: "রাজ্য নির্বাচন করুন",
+    crop: "ফসল",
+    selectCrop: "ফসল নির্বাচন করুন",
+    soilType: "মাটির ধরন",
+    soilAutoFill: "রাজ্য প্রিসেট থেকে স্বয়ংক্রিয় পূরণ ",
+    avgTemp: "গড় তাপমাত্রা (°C)",
+    tempAutoFill: "আবহাওয়া API থেকে স্বয়ংক্রিয় পূরণ",
+    rainfall: "বৃষ্টিপাত (mm)",
+    rainfallAutoFill: "আবহাওয়া API থেকে স্বয়ংক্রিয় পূরণ",
+    humidity: "আর্দ্রতা (%)",
+    humidityAutoFill: "আবহাওয়া API থেকে স্বয়ংক্রিয় পূরণ",
+    area: "এলাকা (হেক্টর)",
+    pesticides: "কীটনাশক (গ্রাম/হেক্টর)",
+    season: "মৌসুম",
+    selectSeason: "মৌসুম নির্বাচন করুন",
+    fertilizer: "সার (গ্রাম/হেক্টর)",
+    
+    // Button text
+    predictButton: "উৎপাদন পূর্বাভাস এবং ফসলের সুপারিশ পান",
+    
+    // Results
+    yieldPrediction: "উৎপাদন পূর্বাভাস",
+    cropRecommendations: "ফসলের সুপারিশ",
+    predictionResult: "পূর্বাভাস ফলাফল",
+    estimatedYield: "অনুমানিত উৎপাদন",
+    recommendations: "সুপারিশ",
+    cropResultTitle: "ফসলের সুপারিশ",
+    bestRecommended: "🏆 সেরা সুপারিশকৃত ফসল",
+    allComparisons: "সব ফসলের তুলনা",
+    expectedYield: "প্রত্যাশিত উৎপাদন:",
+    fertilizerLabel: "সার:",
+    pesticideLabel: "কীটনাশক:",
+    
+    // Units
+    hectareUnit: "হেক্টর (ha)",
+    acreUnit: "একর",
+    sqMeterUnit: "বর্গ মিটার (m²)",
+    sqFtUnit: "বর্গ ফুট (ft²)",
+    bighaUnit: "বিঘা",
+    kathaUnit: "কাঠা",
+    dismilUnit: "ডিসমিল / দশমিক",
+    
+    // Seasons
+    rabi: "রবি",
+    kharif: "খরিফ",
+    zaid: "জায়েদ",
+    winter: "শীত",
+    summer: "গ্রীষ্ম",
+    wholeYear: "সারা বছর",
+    
+    // Loading
+    analyzingData: "তথ্য বিশ্লেষণ করছি — অনুগ্রহ করে অপেক্ষা করুন…",
+    gettingResults: "উৎপাদন পূর্বাভাস এবং ফসলের সুপারিশ পাচ্ছি...",
+    
+    // Crops
+    crops: ["গম", "ভুট্টা", "চাল", "সয়াবিন", "আখ", "সূর্যমুখী", "তামাক", "উড়দ", "হলুদ", "আলু", "রাগি", "মিষ্টি আলু", "মুগ", "পাট", "জোয়ার", "ছোলা", "আদা", "তুলা"]
+  }
+};
+
+document.addEventListener("DOMContentLoaded", () => {
+  // Area converter elements
+  const areaValInput = document.getElementById('area-input-value');
+  const areaUnitSelect = document.getElementById('area-input-unit');
+  const sqmPerUnitInput = document.getElementById('sqm-per-unit');
+  const convertBtn = document.getElementById('convert-btn');
+  const convertedResult = document.getElementById('converted-result');
+  const detectedPlaceInput = document.getElementById('detected-place');
+
+  const defaultSqm = {
+    hectare: 10000,
+    acre: 4046.8564224,
+    sq_meter: 1,
+    sq_ft: 0.09290304
+  };
+
+  const regionalAreaMap = {
+    "Bihar": { bigha: 2512, katha: 136, dismil: 25.12 },
+    "Uttar Pradesh": { bigha: 2500, katha: 136, dismil: 25 },
+    "Bengal": { bigha: 1333, katha: 67, dismil: 13.33 },
+    "West Bengal": { bigha: 1333, katha: 67, dismil: 13.33 },
+    "Punjab": { bigha: 4046.8564224, katha: 121, dismil: 4.0468 },
+    "Haryana": { bigha: 4000, katha: 121, dismil: 4 },
+    "Rajasthan": { bigha: 1600, katha: 20, dismil: 1.6 },
+    "Assam": { bigha: 1333, katha: 67, dismil: 13.33 },
+    "Default": { bigha: 2500, katha: 136, dismil: 25 }
+  };
+
+  function getRegionalValueForState(stateName, unitKey) {
+    if (!stateName) return null;
+    const s = stateName.trim();
+    const key = Object.keys(regionalAreaMap).find(k => k.toLowerCase() === s.toLowerCase());
+    const map = key ? regionalAreaMap[key] : regionalAreaMap['Default'];
+    return map && map[unitKey] ? map[unitKey] : null;
+  }
+
+  function updateSqmPlaceholder() {
+    const unit = areaUnitSelect.value;
+    if (defaultSqm[unit]) {
+      sqmPerUnitInput.value = defaultSqm[unit];
+      sqmPerUnitInput.placeholder = 'sqm per unit (auto-filled)';
+      sqmPerUnitInput.disabled = true;
+    } else if (unit === 'bigha' || unit === 'katha' || unit === 'dismil') {
+      const detectedState = (document.getElementById('location').value) || (detectedPlaceInput && detectedPlaceInput.value) || '';
+      const regionalVal = getRegionalValueForState(detectedState, unit);
+      if (regionalVal) {
+        sqmPerUnitInput.value = regionalVal;
+        sqmPerUnitInput.placeholder = 'sqm per unit (auto from state)';
+        sqmPerUnitInput.disabled = false;
+      } else {
+        sqmPerUnitInput.value = '';
+        sqmPerUnitInput.placeholder = 'enter sqm per unit (varies by state)';
+        sqmPerUnitInput.disabled = false;
+      }
+    } else {
+      sqmPerUnitInput.value = '';
+      sqmPerUnitInput.placeholder = 'enter sqm per unit (varies by state)';
+      sqmPerUnitInput.disabled = false;
+    }
+  }
+
+  function convertToHectares() {
+    const v = parseFloat(areaValInput.value);
+    const sqmPer = parseFloat(sqmPerUnitInput.value);
+    if (isNaN(v) || v < 0) { convertedResult.innerText = 'Enter valid value'; return; }
+    if (isNaN(sqmPer) || sqmPer <= 0) { convertedResult.innerText = 'Enter sqm per unit'; return; }
+    const hectares = (v * sqmPer) / 10000;
+    const formatted = Math.round((hectares + Number.EPSILON) * 10000) / 10000;
+    convertedResult.innerText = `${formatted} ha`;
+    const mainArea = document.getElementById('area');
+    if (mainArea) mainArea.value = formatted;
+  }
+
+  areaUnitSelect.addEventListener('change', updateSqmPlaceholder);
+  convertBtn.addEventListener('click', convertToHectares);
+  areaValInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); convertToHectares(); } });
+
+  updateSqmPlaceholder();
+
+  // Rest of the page elements
+  const form = document.getElementById("prediction-form");
+  const loader = document.getElementById("loader");
+  const buttonText = document.getElementById("button-text");
+  const languageSwitcher = document.getElementById("language-switcher");
+  const locationSelect = document.getElementById("location");
+  const soilTypeInput = document.getElementById("soil-type");
+  const tempInput = document.getElementById("temp");
+  const rainfallInput = document.getElementById("rainfall");
+  const cropSelect = document.getElementById("crop");
+  const seasonSelect = document.getElementById("season");
+  const humidityInput = document.getElementById("humidity");
+  const useLocationBtn = document.getElementById('use-location-btn');
+
+  // Tab functionality
+  const yieldTab = document.getElementById('yield-tab');
+  const recommendationsTab = document.getElementById('recommendations-tab');
+  const yieldResults = document.getElementById('yield-results');
+  const cropRecommendations = document.getElementById('crop-recommendations');
+
+  let suppressLocationHandler = false;
+
+  // Tab switching functionality
+  yieldTab.addEventListener('click', () => {
+    yieldTab.classList.add('active');
+    recommendationsTab.classList.remove('active');
+    yieldResults.classList.remove('hidden');
+    cropRecommendations.classList.add('hidden');
+  });
+
+  recommendationsTab.addEventListener('click', () => {
+    recommendationsTab.classList.add('active');
+    yieldTab.classList.remove('active');
+    cropRecommendations.classList.remove('hidden');
+    yieldResults.classList.add('hidden');
+  });
+
+  const stateData = {
+    "Andhra Pradesh": { soil: "Red sandy / loamy" },
+    "Arunachal Pradesh": { soil: "Alluvial / loamy" },
+    "Assam": { soil: "Alluvial (silty)" },
+    "Bihar": { soil: "Gangetic alluvium" },
+    "Chhattisgarh": { soil: "Lateritic / alluvial" },
+    "Goa": { soil: "Lateritic / coastal sand" },
+    "Gujarat": { soil: "Alluvial / black cotton in parts" },
+    "Haryana": { soil: "Alluvial (sandy loam)" },
+    "Himachal Pradesh": { soil: "Mountainous / loamy" },
+    "Jharkhand": { soil: "Red laterite / loam" },
+    "Karnataka": { soil: "Red loam / black cotton in north" },
+    "Kerala": { soil: "Lateritic / alluvial" },
+    "Madhya Pradesh": { soil: "Black cotton / alluvial" },
+    "Maharashtra": { soil: "Black cotton / lateritic" },
+    "Manipur": { soil: "Alluvial / loamy" },
+    "Meghalaya": { soil: "Acidic / loamy" },
+    "Mizoram": { soil: "Acidic / sandy loam" },
+    "Nagaland": { soil: "Loamy / alluvial" },
+    "Odisha": { soil: "Alluvial / red loam" },
+    "Punjab": { soil: "Alluvial (fertile)" },
+    "Rajasthan": { soil: "Arid / sandy" },
+    "Sikkim": { soil: "Mountainous / loamy" },
+    "Tamil Nadu": { soil: "Red loam / black in parts" },
+    "Telangana": { soil: "Red sandy / black cotton in north" },
+    "Tripura": { soil: "Alluvial / loamy" },
+    "Uttar Pradesh": { soil: "Alluvial (Gangetic)" },
+    "Uttarakhand": { soil: "Loamy / mountainous" },
+    "West Bengal": { soil: "Alluvial / lateritic" },
+    "Delhi": { soil: "Alluvial / urban fill" },
+    "Jammu & Kashmir": { soil: "Alluvial / mountain soils" },
+    "Ladakh": { soil: "Cold desert / rocky" },
+    "Chandigarh": { soil: "Alluvial / sandy loam" },
+    "Puducherry": { soil: "Coastal alluvial" },
+    "Andaman & Nicobar Islands": { soil: "Coastal / peaty" },
+    "Lakshadweep": { soil: "Coral sand / coastal" }
+  };
+
+  // Complete translation function
+  function updateLanguage(lang) {
+    const t = translations[lang] || translations.en;
+    
+    // Page headers
+    document.getElementById("page-title").innerText = t.title;
+    document.getElementById("page-desc").innerText = t.description;
+    
+    // Home button
+    const homeBtn = document.getElementById("home-btn");
+    if (homeBtn) {
+      homeBtn.innerHTML = `<svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M15 19l-7-7 7-7" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>${t.returnHome}`;
+    }
+    
+    // Area converter section
+    const areaConverterLabel = document.querySelector('.area-converter-row').previousElementSibling;
+    if (areaConverterLabel) areaConverterLabel.innerText = t.areaConverter;
+    
+    document.getElementById("area-input-value").placeholder = t.enterValue;
+    document.getElementById("sqm-per-unit").placeholder = t.sqmPerUnit;
+    document.getElementById("convert-btn").innerText = t.convert;
+    
+    // Area converter note
+    const areaNote = document.querySelector('.area-converter-row').parentElement.querySelector('p');
+    if (areaNote) areaNote.innerText = t.areaConverterNote;
+    
+    // Area converter result
+    const resultLabel = document.querySelector('#converted-result').previousElementSibling;
+    if (resultLabel) resultLabel.innerText = t.result + ':';
+    
+    // Area unit dropdown
+    const areaUnitSelect = document.getElementById('area-input-unit');
+    if (areaUnitSelect) {
+      const options = areaUnitSelect.querySelectorAll('option');
+      if (options[0]) options[0].innerText = t.hectareUnit;
+      if (options[1]) options[1].innerText = t.acreUnit;
+      if (options[2]) options[2].innerText = t.sqMeterUnit;
+      if (options[3]) options[3].innerText = t.sqFtUnit;
+      if (options[4]) options[4].innerText = t.bighaUnit;
+      if (options[5]) options[5].innerText = t.kathaUnit;
+      if (options[6]) options[6].innerText = t.dismilUnit;
+    }
+    
+    // Location section
+    document.getElementById("use-location-btn").innerText = t.useLocation;
+    document.getElementById("detected-place").placeholder = t.detectedLocation;
+    
+    // Form labels
+    document.getElementById("lbl-location").innerText = t.location;
+    document.getElementById("lbl-crop").innerText = t.crop;
+    document.getElementById("lbl-soil").innerText = t.soilType;
+    document.getElementById("lbl-temp").innerText = t.avgTemp;
+    document.getElementById("lbl-rain").innerText = t.rainfall;
+    document.getElementById("lbl-humidity").innerText = t.humidity;
+    document.getElementById("lbl-area").innerText = t.area;
+    document.getElementById("lbl-pesticides").innerText = t.pesticides;
+    document.getElementById("lbl-season").innerText = t.season;
+    document.getElementById("lbl-fertilizer").innerText = t.fertilizer;
+    
+    // Form placeholders and select options
+    const locationSelect = document.getElementById("location");
+    if (locationSelect && locationSelect.options[0]) {
+      locationSelect.options[0].innerText = t.selectState;
+    }
+    
+    document.getElementById("soil-type").placeholder = t.soilAutoFill;
+    document.getElementById("temp").placeholder = t.tempAutoFill;
+    document.getElementById("rainfall").placeholder = t.rainfallAutoFill;
+    document.getElementById("humidity").placeholder = t.humidityAutoFill;
+    
+    // Season dropdown
+    const seasonSelect = document.getElementById("season");
+    if (seasonSelect) {
+      const seasonOptions = seasonSelect.querySelectorAll('option');
+      if (seasonOptions[0]) seasonOptions[0].innerText = t.selectSeason;
+      if (seasonOptions[1]) seasonOptions[1].innerText = t.rabi;
+      if (seasonOptions[2]) seasonOptions[2].innerText = t.kharif;
+      if (seasonOptions[3]) seasonOptions[3].innerText = t.zaid;
+      if (seasonOptions[4]) seasonOptions[4].innerText = t.winter;
+      if (seasonOptions[5]) seasonOptions[5].innerText = t.summer;
+      if (seasonOptions[6]) seasonOptions[6].innerText = t.wholeYear;
+    }
+    
+    // Main submit button
+    document.getElementById("button-text").innerText = t.predictButton;
+    
+    // Results section tabs
+    document.getElementById("yield-tab").innerText = t.yieldPrediction;
+    document.getElementById("recommendations-tab").innerText = t.cropRecommendations;
+    
+    // Results headings
+    document.getElementById("result-title").innerText = t.predictionResult;
+    document.getElementById("estimated-yield").innerText = t.estimatedYield;
+    document.getElementById("recommendations-title").innerText = t.recommendations;
+    document.getElementById("crop-result-title").innerText = t.cropResultTitle;
+    
+    // Best crop section
+    const bestCropTitle = document.querySelector('#best-crop-section h3');
+    if (bestCropTitle) bestCropTitle.innerText = t.bestRecommended;
+    
+    const allCropsTitle = document.querySelector('#all-crops-section h3');
+    if (allCropsTitle) allCropsTitle.innerText = t.allComparisons;
+    
+    // Loading overlay
+    const loadingText = document.querySelector('.loading-card .text-sm');
+    if (loadingText) loadingText.innerText = t.analyzingData;
+    
+    const loadingSubtext = document.querySelector('.loading-card .text-xs');
+    if (loadingSubtext) loadingSubtext.innerText = t.gettingResults;
+    
+    // Update crops dropdown
+    cropSelect.innerHTML = "";
+    const defaultCrop = document.createElement("option");
+    defaultCrop.value = "";
+    defaultCrop.innerText = t.selectCrop;
+    cropSelect.appendChild(defaultCrop);
+    
+    t.crops.forEach(crop => {
+      const opt = document.createElement("option");
+      opt.value = crop;
+      opt.innerText = crop;
+      cropSelect.appendChild(opt);
+    });
+  }
+
+  // Language initialization
+  const savedLang = localStorage.getItem("selectedLanguage") || "en";
+  languageSwitcher.value = savedLang;
+  updateLanguage(savedLang);
+  languageSwitcher.addEventListener('change', e => { 
+    const lang = e.target.value; 
+    localStorage.setItem("selectedLanguage", lang); 
+    updateLanguage(lang); 
+  });
+
+// Weather API function - FIXED
+  async function fetchWeatherMonthly(lat, lon) {
+    try {
+      console.log(`Fetching weather for coordinates: ${lat}, ${lon}`);
+      const now = new Date();
+      const endDate = now.toISOString().slice(0,10); // YYYY-MM-DD (UTC)
+      const start = new Date(now.getTime() - (30 * 24 * 60 * 60 * 1000));
+      const startDate = start.toISOString().slice(0,10);
+
+      // FIXED: Don't encode numeric coordinates
+      const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&hourly=precipitation,relativehumidity_2m,temperature_2m&start_date=${startDate}&end_date=${endDate}&timezone=UTC`;
+      console.log(`Weather API URL: ${url}`);
+      
+      const res = await fetch(url);
+      if (!res.ok) throw new Error('Open-Meteo error ' + res.status);
+      const data = await res.json();
+      console.log('Weather API response received:', data);
+
+      let total30 = 0;
+      let hourCount = 0;
+      let lastHumidity = null;
+      let tempSum = 0;
+
+      if (data.hourly && Array.isArray(data.hourly.time)) {
+        const times = data.hourly.time;
+        const prec = data.hourly.precipitation || [];
+        const hum = data.hourly.relativehumidity_2m || [];
+        const temps = data.hourly.temperature_2m || [];
+
+        for (let i = 0; i < times.length; i++) {
+          const t = new Date(times[i]);
+          if (t >= start && t <= now) {
+            const p = parseFloat(prec[i]);
+            if (!isNaN(p)) total30 += p;
+            if (!isNaN(temps[i])) { tempSum += temps[i]; }
+            if (!isNaN(hum[i])) lastHumidity = hum[i];
+            hourCount += 1;
+          }
+        }
+      }
+
+      const totalRounded = Math.round(total30 * 100) / 100;
+      const avgPerDay = Math.round((total30 / 30) * 100) / 100;
+      const avgTemp = hourCount ? Math.round((tempSum / hourCount) * 10) / 10 : null;
+
+      console.log(`Weather data processed - Temp: ${avgTemp}°C, Humidity: ${lastHumidity}%, Rainfall: ${totalRounded}mm`);
+      return { temp: avgTemp, humidity: lastHumidity, rainfallTotal30d: totalRounded, rainfallAvgPerDay: avgPerDay };
+    } catch (err) {
+      console.error('Weather fetch failed (Open-Meteo month):', err);
+      return null;
+    }
+  }
+
+  // FIXED reverse geocode function with better state matching and debugging
+  async function reverseGeocodeAndSetState(lat, lon, opts = { setDetected: true }) {
+    console.log(`Reverse geocoding coordinates: ${lat}, ${lon}`);
+    try {
+      const url = `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lon}&addressdetails=1`;
+      console.log(`Fetching from: ${url}`);
+      
+      const res = await fetch(url, { 
+        headers: { 
+          'Accept': 'application/json', 
+          'User-Agent': 'CropYieldApp/1.0 (contact@example.com)' 
+        } 
+      });
+      
+      let displayName = '';
+      let foundState = '';
+      
+      if (res.ok) {
+        const data = await res.json();
+        console.log('Geocoding response:', data);
+        const addr = data.address || {};
+        foundState = addr.state || addr.region || addr.county || addr.state_district || '';
+        displayName = data.display_name || foundState || '';
+        console.log(`Found state: "${foundState}", Display: "${displayName}"`);
+      } else {
+        console.error(`Geocoding failed with status: ${res.status}`);
+      }
+
+      // Set detected display only if allowed and input is empty or showing "Detecting..."
+      if (opts.setDetected && detectedPlaceInput) {
+        if (!detectedPlaceInput.value || detectedPlaceInput.value === '' || detectedPlaceInput.value === 'Detecting...') {
+          detectedPlaceInput.value = displayName || '';
+        }
+      }
+
+      // IMPROVED: Better state matching logic
+      const keys = Array.from(locationSelect.options).map(o => o.text);
+      const normalized = (foundState || '').toLowerCase().trim();
+      console.log(`Normalized state: "${normalized}"`);
+      console.log('Available states:', keys);
+      
+      // Try exact match first
+      let match = keys.find(k => k.toLowerCase().trim() === normalized);
+      
+      if (!match) {
+        // Try partial matches - both directions
+        match = keys.find(k => {
+          const keyLower = k.toLowerCase().trim();
+          return keyLower.includes(normalized) || normalized.includes(keyLower);
+        });
+      }
+      
+      if (!match) {
+        // Specific mappings for common variations and edge cases
+        const stateMapping = {
+          'andaman': 'Andaman & Nicobar Islands',
+          'nicobar': 'Andaman & Nicobar Islands',
+          'andaman and nicobar': 'Andaman & Nicobar Islands',
+          'delhi': 'Delhi',
+          'new delhi': 'Delhi',
+          'national capital territory of delhi': 'Delhi',
+          'jammu': 'Jammu & Kashmir',
+          'kashmir': 'Jammu & Kashmir',
+          'jammu and kashmir': 'Jammu & Kashmir',
+          'dadra': 'Dadra and Nagar Haveli and Daman and Diu',
+          'nagar haveli': 'Dadra and Nagar Haveli and Daman and Diu',
+          'daman': 'Dadra and Nagar Haveli and Daman and Diu',
+          'diu': 'Dadra and Nagar Haveli and Daman and Diu',
+          'puducherry': 'Puducherry',
+          'pondicherry': 'Puducherry',
+          'lakshadweep': 'Lakshadweep',
+          'laccadive': 'Lakshadweep',
+          'chandigarh': 'Chandigarh',
+          'uttaranchal': 'Uttarakhand',
+          'chhattisgarh': 'Chhattisgarh',
+          'chattisgarh': 'Chhattisgarh',
+          'orissa': 'Odisha',
+          'odisha': 'Odisha'
+        };
+        
+        for (const [key, value] of Object.entries(stateMapping)) {
+          if (normalized.includes(key.toLowerCase()) || key.toLowerCase().includes(normalized)) {
+            match = value;
+            console.log(`Mapped "${normalized}" to "${match}" via "${key}"`);
+            break;
+          }
+        }
+      }
+      
+      console.log(`Final state match: "${match}"`);
+
+      if (match) {
+        // Prevent triggering the location change handler
+        suppressLocationHandler = true;
+        locationSelect.value = match;
+        console.log(`Set location select to: "${match}"`);
+        
+        // Update sqm placeholder after state is set
+        setTimeout(() => { 
+          updateSqmPlaceholder(); 
+          suppressLocationHandler = false; 
+        }, 800);
+      } else {
+        console.warn(`No state match found for: "${foundState}" (normalized: "${normalized}")`);
+      }
+
+      // Set loading states
+      tempInput.value = 'Detecting...';
+      humidityInput.value = 'Detecting...';
+      rainfallInput.value = 'Detecting...';
+      soilTypeInput.value = 'Detecting...';
+
+      // Fetch weather data
+      const weather = await fetchWeatherMonthly(lat, lon);
+      if (weather) {
+        tempInput.value = (weather.temp != null) ? `${weather.temp}°C (30d avg)` : '';
+        humidityInput.value = (weather.humidity != null) ? `${weather.humidity}% (recent)` : '';
+        if (weather.rainfallTotal30d != null) {
+          rainfallInput.value = `${weather.rainfallTotal30d} mm (30d total, avg ${weather.rainfallAvgPerDay} mm/day)`;
+        } else {
+          rainfallInput.value = '';
+        }
+      } else {
+        // Clear on weather fetch failure
+        tempInput.value = '';
+        humidityInput.value = '';
+        rainfallInput.value = '';
+      }
+
+      // Set soil data from state presets after a delay
+      setTimeout(() => {
+        if (soilTypeInput.value === 'Detecting...' || soilTypeInput.value === '') {
+          soilTypeInput.value = stateData[match]?.soil || '';
+        }
+      }, 700);
+
+      return displayName || foundState || match || '';
+    } catch (err) {
+      console.error('Reverse geocoding error:', err);
+      // Clear loading states on error
+      tempInput.value = '';
+      humidityInput.value = '';
+      rainfallInput.value = '';
+      soilTypeInput.value = '';
+      
+      // Try to set soil from selected state if available
+      const sel = locationSelect.value;
+      if (sel && stateData[sel]) {
+        setTimeout(() => { 
+          soilTypeInput.value = stateData[sel].soil || ''; 
+        }, 700);
+      }
+      return '';
+    }
+  }
+
+  // FIXED "Use my location" button handler with better error handling
+  useLocationBtn?.addEventListener('click', () => {
+    if (!('geolocation' in navigator)) {
+      alert('Geolocation is not supported by your browser.');
+      return;
+    }
+    
+    useLocationBtn.disabled = true;
+    useLocationBtn.innerText = 'Locating...';
+    
+    console.log('Requesting geolocation...');
+    
+    navigator.geolocation.getCurrentPosition(
+      async (position) => {
+        try {
+          const { latitude, longitude } = position.coords;
+          console.log(`Got device coordinates: ${latitude}, ${longitude} (accuracy: ${position.coords.accuracy}m)`);
+          
+          // When using real geolocation, allow detected-place to be set
+          await reverseGeocodeAndSetState(latitude, longitude, { setDetected: true });
+          
+          // Update area converter after state detection
+          setTimeout(() => { 
+            updateSqmPlaceholder(); 
+          }, 900);
+          
+        } catch (err) {
+          console.error('Error processing location:', err);
+          alert('Could not determine location name: ' + err.message);
+        } finally {
+          useLocationBtn.disabled = false;
+          useLocationBtn.innerText = 'Use my location';
+        }
+      },
+      (error) => {
+        console.error('Geolocation error - Code:', error.code, 'Message:', error.message);
+        
+        let errorMsg = 'Unable to get your location. ';
+        switch(error.code) {
+          case error.PERMISSION_DENIED:
+            errorMsg += 'Please allow location access in your browser settings and try again.';
+            break;
+          case error.POSITION_UNAVAILABLE:
+            errorMsg += 'Location information is unavailable. Please check your device GPS and try again.';
+            break;
+          case error.TIMEOUT:
+            errorMsg += 'Location request timed out. Please try again or select your state manually.';
+            break;
+          default:
+            errorMsg += 'An unknown error occurred. Please select your state manually from the dropdown.';
+            break;
+        }
+        
+        alert(errorMsg);
+        
+        // Clear any temporary detecting placeholders
+        if (detectedPlaceInput) detectedPlaceInput.value = '';
+        tempInput.value = '';
+        humidityInput.value = '';
+        rainfallInput.value = '';
+        soilTypeInput.value = '';
+        
+        useLocationBtn.disabled = false;
+        useLocationBtn.innerText = 'Use my location';
+      },
+      {
+        enableHighAccuracy: true,    // Request high accuracy
+        timeout: 20000,             // 20 second timeout
+        maximumAge: 300000          // Accept cached position up to 5 minutes old
+      }
+    );
+  });
+
+  // FIXED location select change handler with better geocoding
+  locationSelect.addEventListener("change", async () => {
+    // If this change was triggered programmatically from reverseGeocodeAndSetState, ignore it
+    if (suppressLocationHandler) { 
+      console.log('Suppressing location handler (programmatic change)');
+      suppressLocationHandler = false; 
+      return; 
+    }
+
+    const selectedState = locationSelect.value;
+    console.log(`User selected state: "${selectedState}"`);
+    
+    // If user cleared selection, do nothing
+    if (!selectedState) return;
+
+    // Set loading states (preserve detected-place input)
+    tempInput.value = 'Detecting...';
+    humidityInput.value = 'Detecting...';
+    rainfallInput.value = 'Detecting...';
+    soilTypeInput.value = 'Detecting...';
+
+    // Quick auto-fill from state presets
+    setTimeout(() => {
+      if ((soilTypeInput.value === 'Detecting...' || soilTypeInput.value === '') && stateData[selectedState]) {
+        soilTypeInput.value = stateData[selectedState].soil || '';
+      }
+      updateSqmPlaceholder();
+    }, 700);
+
+    // Try to geocode the state name to get coordinates for weather data
+    try {
+      const query = `${selectedState}, India`;
+      const encodedQuery = encodeURIComponent(query);
+      const url = `https://nominatim.openstreetmap.org/search?format=jsonv2&q=${encodedQuery}&limit=1&addressdetails=1&countrycodes=in`;
+      console.log(`Geocoding state: ${url}`);
+      
+      const res = await fetch(url, { 
+        headers: { 
+          'Accept': 'application/json', 
+          'User-Agent': 'CropYieldApp/1.0 (contact@example.com)' 
+        } 
+      });
+      
+      if (res.ok) {
+        const arr = await res.json();
+        console.log('State geocoding response:', arr);
+        
+        if (Array.isArray(arr) && arr.length > 0) {
+          const lat = parseFloat(arr[0].lat);
+          const lon = parseFloat(arr[0].lon);
+          
+          if (!isNaN(lat) && !isNaN(lon)) {
+            console.log(`Geocoded "${selectedState}" to: ${lat}, ${lon}`);
+            // When user selects state manually, do NOT overwrite detected-place
+            await reverseGeocodeAndSetState(lat, lon, { setDetected: false });
+            return;
+          }
+        }
+      }
+      
+      console.warn(`Failed to geocode state: ${selectedState}`);
+    } catch (err) {
+      console.error('State geocoding failed:', err);
+    }
+
+    // If geocoding failed, clear loading states and use presets only
+    tempInput.value = '';
+    humidityInput.value = '';
+    rainfallInput.value = '';
+  });
+
+  // MERGED FORM SUBMIT HANDLER - Both yield prediction and crop recommendations
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const submitBtn = form.querySelector('button[type="submit"]') || e.submitter || null;
+    const currentLang = languageSwitcher.value || 'en';
+    const t = translations[currentLang] || translations.en;
+
+    const buttonTextEl = document.getElementById('button-text');
+    const inlineLoader = document.getElementById('loader');
+    const overlay = document.getElementById('loading-overlay');
+
+    try {
+      if (buttonTextEl) buttonTextEl.classList.add('hidden');
+      if (inlineLoader) inlineLoader.classList.remove('hidden');
+      if (submitBtn) submitBtn.disabled = true;
+      if (overlay) { overlay.classList.add('show'); overlay.setAttribute('aria-hidden','false'); }
+
+      // Validate area
+      const areaVal = parseFloat(document.getElementById('area').value);
+      if (isNaN(areaVal) || areaVal <= 0) {
+        alert("Please enter a valid area (hectares).");
+        throw new Error("Invalid area");
+      }
+
+      // Clean numeric values from formatted strings
+      const cleanTemp = parseFloat(tempInput.value.match(/[\d.-]+/)?.[0] || '0') || 0;
+      const cleanRainfall = parseFloat(rainfallInput.value.match(/[\d.-]+/)?.[0] || '0') || 0;
+      const cleanHumidity = parseFloat(humidityInput.value.match(/[\d.-]+/)?.[0] || '0') || 0;
+
+      const formData = {
+        location: locationSelect.value || "",
+        crop: cropSelect.value || "", 
+        season: seasonSelect.value || "",
+        area: areaVal,
+        pesticides: parseFloat(document.getElementById('pesticides').value) || 0,
+        fertilizer: parseFloat(document.getElementById('fertilizer').value) || 0,
+        soil: soilTypeInput.value || "",
+        temp: cleanTemp,
+        rainfall: cleanRainfall,
+        humidity: cleanHumidity
+      };
+
+      console.log("Sending cleaned data to backend:", formData);
+
+      // Make both API calls in parallel
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 30000);
+
+      // Individual prediction API call
+      const predictionPromise = fetch("http://127.0.0.1:8000/predict", {
+        method: "POST",
+        headers: { 
+          "Content-Type": "application/json", 
+          "Accept": "application/json" 
+        },
+        body: JSON.stringify(formData),
+        signal: controller.signal
+      });
+
+      // Multi-crop recommendation API call
+      const multiCropData = {
+        crops: ["Rice", "Wheat", "Maize", "Soyabean", "Cotton(lint)", "Sugarcane", "Sunflower", "Tobacco", "Urad", "Turmeric", "Potato", "Ragi", "Sweet Potato", "Moong", "Jute", "Jowar", "Gram", "Ginger"],
+        location: formData.location,
+        season: formData.season,
+        area: formData.area,
+        temp: formData.temp,
+        rainfall: formData.rainfall,
+        humidity: formData.humidity,
+        fertilizer: formData.fertilizer,
+        pesticides: formData.pesticides
+      };
+
+      const recommendationPromise = fetch("http://127.0.0.1:8000/recommend_multi_crop/", {
+        method: "POST",
+        headers: { 
+          "Content-Type": "application/json", 
+          "Accept": "application/json" 
+        },
+        body: JSON.stringify(multiCropData),
+        signal: controller.signal
+      });
+
+      // Wait for both responses
+      const [predictionRes, recommendationRes] = await Promise.all([predictionPromise, recommendationPromise]);
+
+      clearTimeout(timeoutId);
+
+      // Handle prediction response
+      let predictionData = null;
+      if (predictionRes.ok) {
+        try { 
+          predictionData = await predictionRes.json(); 
+        } catch (err) {
+          console.error("Invalid JSON from prediction API");
+        }
+      } else {
+        console.error("Prediction API error:", predictionRes.status);
+      }
+
+      // Handle recommendation response
+      let recommendationData = null;
+      if (recommendationRes.ok) {
+        try { 
+          recommendationData = await recommendationRes.json(); 
+        } catch (err) {
+          console.error("Invalid JSON from recommendation API");
+        }
+      } else {
+        console.error("Recommendation API error:", recommendationRes.status);
+      }
+
+      // Show results section
+      const resultsSection = document.getElementById("results-section");
+      if (resultsSection) {
+        resultsSection.classList.remove('hidden');
+        resultsSection.style.display = 'block';
+        resultsSection.style.visibility = 'visible';
+        resultsSection.style.opacity = '1';
+        resultsSection.style.transform = 'translateY(0)';
+        resultsSection.classList.add('show');
+      }
+
+// Update yield prediction results
+if (predictionData) {
+  const yieldValue = predictionData.yield || predictionData.predicted_yield;
+  const yieldEl = document.getElementById("yield-result");
+  if (yieldEl && yieldValue !== null && yieldValue !== undefined) {
+    // Display yield in tonnes/ha with proper rounding
+    const tonnesPerHa = Math.round(yieldValue * 100) / 100;
+    yieldEl.innerText = `${tonnesPerHa} tonnes/ha`;
+  }
+
+  const recList = document.getElementById("recommendations-list");
+  if (recList) {
+    recList.innerHTML = "";
+    const recommendations = predictionData.recommendations || [];
+    
+    if (recommendations.length > 0) {
+      recommendations.forEach(rec => {
+        const li = document.createElement('li');
+        li.innerText = `✔ ${rec}`;
+        recList.appendChild(li);
+      });
+    } else {
+      const li = document.createElement('li');
+      li.innerText = `✔ Prediction completed successfully for ${formData.crop}`;
+      recList.appendChild(li);
+    }
+  }
+}
+
+// Update crop recommendations
+if (recommendationData) {
+  const bestCropDetails = document.getElementById('best-crop-details');
+  const bestCrop = recommendationData.best_crop_recommendation;
+  if (bestCrop && bestCropDetails) {
+    // Display yield in tonnes/ha
+    const tonnesPerHa = Math.round(bestCrop.predicted_yield * 100) / 100;
+    bestCropDetails.innerHTML = `
+      <div>
+        <p class="text-green-300 font-semibold">Crop: ${bestCrop.crop}</p>
+        <p class="text-white">Expected Yield: <span class="font-bold">${tonnesPerHa} tonnes/ha</span></p>
+        <p class="text-gray-300">Fertilizer: ${bestCrop.fertilizer} g/ha</p>
+      </div>
+      <div>
+        <p class="text-gray-300">Pesticide: ${bestCrop.pesticide} g/ha</p>
+        <p class="text-blue-300">${bestCrop.irrigation_advice}</p>
+        <p class="text-yellow-300 text-xs mt-1">${bestCrop.fertilizer_message}</p>
+      </div>
+    `;
+  }
+
+  const allCropsList = document.getElementById('all-crops-list');
+  const allCrops = recommendationData.all_recommendations;
+  if (allCrops && allCropsList) {
+    allCropsList.innerHTML = '';
+    allCrops.forEach((crop, index) => {
+      // Display yield in tonnes/ha
+      const tonnesPerHa = Math.round(crop.predicted_yield * 100) / 100;
+      const cropCard = document.createElement('div');
+      cropCard.className = 'p-4 bg-black/20 rounded-lg border border-white/10 hover:border-white/20 transition-colors';
+      cropCard.innerHTML = `
+        <div class="flex justify-between items-start mb-2">
+          <h4 class="font-semibold text-white">${index + 1}. ${crop.crop}</h4>
+          <span class="text-${crop.predicted_yield > 3 ? 'green' : crop.predicted_yield > 1.5 ? 'yellow' : 'red'}-400 font-bold">
+            ${tonnesPerHa} tonnes/ha
+          </span>
+        </div>
+        <div class="grid grid-cols-2 gap-2 text-xs text-gray-300">
+          <p>Fertilizer: ${crop.fertilizer} g/ha</p>
+          <p>Pesticide: ${crop.pesticide} g/ha</p>
+        </div>
+        <p class="text-xs text-blue-300 mt-2">${crop.irrigation_advice}</p>
+        <p class="text-xs text-yellow-400 mt-1">${crop.fertilizer_message}</p>
+      `;
+      allCropsList.appendChild(cropCard);
+    });
+  }
+}
+
+      // Scroll to results
+      setTimeout(() => {
+        const rect = resultsSection.getBoundingClientRect();
+        const scrollTarget = window.pageYOffset + rect.top - 100;
+        window.scrollTo({ top: scrollTarget, behavior: 'smooth' });
+      }, 100);
+
+    } catch (err) {
+      console.error("Error during prediction:", err);
+      
+      let errorMessage = "Prediction failed. ";
+      if (err.name === 'AbortError') {
+        errorMessage += "Request timed out. Please try again.";
+      } else if (err.message.includes('404')) {
+        errorMessage += "Location not found in database. Please select a different state.";
+      } else if (err.message.includes('400')) {
+        errorMessage += "Invalid input data. Please check your crop/season/state selection.";
+      } else {
+        errorMessage += err.message || "Unknown error occurred.";
+      }
+      
+      alert(errorMessage);
+
+      try {
+        const resultsSection = document.getElementById("results-section");
+        if (resultsSection) {
+          resultsSection.classList.remove('hidden');
+          resultsSection.style.display = 'block';
+          resultsSection.style.visibility = 'visible';
+          resultsSection.style.opacity = '1';
+          resultsSection.style.transform = 'translateY(0)';
+          resultsSection.classList.add('show');
+          
+          const yieldEl = document.getElementById("yield-result");
+          if (yieldEl) yieldEl.innerText = "Error";
+          
+          const recList = document.getElementById("recommendations-list");
+          if (recList) {
+            recList.innerHTML = "";
+            const li = document.createElement('li');
+            li.innerText = `❌ ${errorMessage}`;
+            li.style.color = '#ff6b6b';
+            recList.appendChild(li);
+          }
+        }
+      } catch (inner) { 
+        console.error("Failed to display error UI:", inner); 
+      }
+      
+    } finally {
+      // Reset UI state
+      if (buttonTextEl) buttonTextEl.classList.remove('hidden');
+      if (inlineLoader) inlineLoader.classList.add('hidden');
+      if (overlay) { overlay.classList.remove('show'); overlay.setAttribute('aria-hidden','true'); }
+      if (submitBtn) submitBtn.disabled = false;
+    }
+  });
+
+});
+</script>
+
+</body>
+</html>
