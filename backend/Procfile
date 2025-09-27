@@ -1,1 +1,1 @@
-web: python bend.py
+web: python3 -m uvicorn bend:app --host 0.0.0.0 --port $PORT
