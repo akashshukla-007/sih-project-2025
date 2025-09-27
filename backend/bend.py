@@ -349,7 +349,7 @@ if __name__ == "__main__":
     port = int(os.environ.get("PORT", 8000))
     print(f"Starting server on port: {port}")
     uvicorn.run(
-        "main:app",  # Replace "main" with your filename if different
+        "bend:app",  # Updated to match your filename
         host="0.0.0.0",
         port=port,
         reload=False  # Set to False for production
