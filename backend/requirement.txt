@@ -1,0 +1,16 @@
+# Core FastAPI and Server
+fastapi==0.104.1
+uvicorn[standard]==0.24.0
+python-multipart==0.0.6
+pydantic==2.5.0
+
+# Machine Learning Libraries
+scikit-learn==1.3.2
+joblib==1.3.2
+
+# Data Processing
+pandas==2.1.4
+numpy==1.24.3
+
+# CORS Support
+fastapi-cors==0.0.6
