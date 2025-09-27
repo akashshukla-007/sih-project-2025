@@ -8,6 +8,7 @@ import re
 from fastapi.middleware.cors import CORSMiddleware
 import requests
 import os
+import uvicorn  # Add this import
 
 app = FastAPI()
 
@@ -341,3 +342,15 @@ def predict_yield(data: PredictRequest):
         import traceback
         traceback.print_exc()
         raise HTTPException(status_code=500, detail=f"Prediction failed: {str(e)}")
+
+# Add this main section for Railway deployment
+if __name__ == "__main__":
+    import uvicorn
+    port = int(os.environ.get("PORT", 8000))
+    print(f"Starting server on port: {port}")
+    uvicorn.run(
+        "main:app",  # Replace "main" with your filename if different
+        host="0.0.0.0",
+        port=port,
+        reload=False  # Set to False for production
+    )
