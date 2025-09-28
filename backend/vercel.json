@@ -1,0 +1,14 @@
+{
+  "builds": [
+    {
+      "src": "bend.py",
+      "use": "@vercel/python"
+    }
+  ],
+  "routes": [
+    {
+      "src": "/(.*)",
+      "dest": "bend.py"
+    }
+  ]
+}
