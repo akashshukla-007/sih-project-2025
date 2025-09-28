@@ -1,14 +1,10 @@
 {
-  "builds": [
-    {
-      "src": "bend.py",
-      "use": "@vercel/python"
+  "functions": {
+    "bend.py": {
+      "runtime": "python3.9"
     }
-  ],
+  },
   "routes": [
-    {
-      "src": "/(.*)",
-      "dest": "bend.py"
-    }
+    { "src": "/(.*)", "dest": "/bend.py" }
   ]
 }
