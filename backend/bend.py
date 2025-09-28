@@ -344,13 +344,12 @@ def predict_yield(data: PredictRequest):
         raise HTTPException(status_code=500, detail=f"Prediction failed: {str(e)}")
 
 # Add this main section for Railway deployment
+# Add this at the end of bend.py file
+# Export for Vercel
+app_instance = app
+
+# Keep your existing if __name__ == "__main__" block
 if __name__ == "__main__":
     import uvicorn
     port = int(os.environ.get("PORT", 8000))
-    print(f"Starting server on port: {port}")
-    uvicorn.run(
-        "bend:app",  # Updated to match your filename
-        host="0.0.0.0",
-        port=port,
-        reload=False  # Set to False for production
-    )
+    uvicorn.run(app, host="0.0.0.0", port=port)
